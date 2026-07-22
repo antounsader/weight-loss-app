@@ -750,26 +750,36 @@ footer{
         </div>
         <div class="field">
           <label>Quick add from database</label>
-          <div class="flex gap8">
-            <select id="quickFoodSelect" style="flex:1;"></select>
-            <input type="number" id="quickFoodQty" value="100" min="0.1" step="1" style="width:80px;">
+          <div class="flex gap8" style="align-items:flex-end;">
+            <div style="flex:1;">
+              <select id="quickFoodSelect" style="width:100%;"></select>
+            </div>
+            <div style="width:90px;">
+              <label>Grams</label>
+              <input type="number" id="quickFoodQty" value="100" min="0.1" step="1" style="width:100%;">
+            </div>
             <button class="btn secondary" id="quickFoodAdd">Add</button>
           </div>
           <div class="hint" id="quickFoodPreview" style="margin-top:6px;">—</div>
         </div>
         <div class="divider"></div>
         <div class="field">
-          <label>...or log a custom item</label>
+          <label>...or log a custom item <span style="text-transform:none;">— values per 100g</span></label>
         </div>
         <div class="field-row">
           <div class="field"><label>Name</label><input type="text" id="customName" placeholder="Grilled chicken bowl"></div>
-          <div class="field"><label>Calories</label><input type="number" id="customCal" placeholder="520"></div>
+          <div class="field"><label>Grams</label><input type="number" id="customGrams" value="100" step="1" placeholder="100"></div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Protein (g)</label><input type="number" id="customP" placeholder="40"></div>
-          <div class="field"><label>Carbs (g)</label><input type="number" id="customC" placeholder="55"></div>
-          <div class="field"><label>Fat (g)</label><input type="number" id="customF" placeholder="15"></div>
+          <div class="field"><label>Calories /100g</label><input type="number" id="customCal" placeholder="520"></div>
+          <div class="field"><label>Protein /100g</label><input type="number" id="customP" placeholder="40"></div>
         </div>
+        <div class="field-row">
+          <div class="field"><label>Carbs /100g</label><input type="number" id="customC" placeholder="55"></div>
+          <div class="field"><label>Fat /100g</label><input type="number" id="customF" placeholder="15"></div>
+        </div>
+        <p class="hint" style="margin-top:-4px;">Eating the whole thing as one item? Just leave Grams at 100 and type your real totals above — it passes straight through.</p>
+        <div class="hint" id="customFoodPreview" style="margin-bottom:10px;">—</div>
         <button class="btn terracotta block" id="customFoodAdd">Log Custom Item</button>
       </div>
 
@@ -1181,6 +1191,7 @@ const defaultState = {
     { id:'f10', name:'Minced Meat (lean beef, cooked)', cal:2.15, p:0.26, c:0, f:0.12, fiber:0, sugar:0, sodium:0.75, potassium:3.18, calcium:0.18, iron:0.026, magnesium:0.21, vitA:0, vitC:0, vitD:0.001, vitB12:0.024 },
     { id:'f11', name:'Potatoes (boiled)', cal:0.87, p:0.019, c:0.201, f:0.001, fiber:0.018, sugar:0.009, sodium:0.06, potassium:3.79, calcium:0.08, iron:0.0031, magnesium:0.2, vitA:0, vitC:0.13, vitD:0, vitB12:0 },
     { id:'f12', name:'Chicken Breast (cooked)', cal:1.65, p:0.31, c:0, f:0.036, fiber:0, sugar:0, sodium:0.74, potassium:2.56, calcium:0.15, iron:0.01, magnesium:0.29, vitA:0.09, vitC:0, vitD:0.001, vitB12:0.003 },
+    { id:'f13', name:'Avocado', cal:1.6, p:0.02, c:0.085, f:0.147, fiber:0.067, sugar:0.007, sodium:0.07, potassium:4.85, calcium:0.12, iron:0.0055, magnesium:0.29, vitA:0.07, vitC:0.1, vitD:0, vitB12:0 },
   ],
   combos: [
     { id:'combo1', name:'Usual Protein Shake (2 scoops Rite protein, banana, 10g chia, 10g flax)', cal:336, p:28, c:34, f:7, parts:[] },
@@ -1882,17 +1893,38 @@ document.getElementById('quickFoodAdd').addEventListener('click', ()=>{
   document.getElementById('quickFoodQty').value = 100;
   updateQuickFoodPreview();
 });
+function getCustomFoodScaled(){
+  const grams = parseFloat(document.getElementById('customGrams').value) || 0;
+  const mult = grams/100;
+  return {
+    grams,
+    cal: (parseFloat(document.getElementById('customCal').value)||0)*mult,
+    p: (parseFloat(document.getElementById('customP').value)||0)*mult,
+    c: (parseFloat(document.getElementById('customC').value)||0)*mult,
+    f: (parseFloat(document.getElementById('customF').value)||0)*mult,
+  };
+}
+function updateCustomFoodPreview(){
+  const s = getCustomFoodScaled();
+  document.getElementById('customFoodPreview').textContent =
+    `→ ${round1(s.cal)} kcal · P ${round1(s.p)}g · C ${round1(s.c)}g · F ${round1(s.f)}g`;
+}
+['customGrams','customCal','customP','customC','customF'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', updateCustomFoodPreview);
+});
+
 document.getElementById('customFoodAdd').addEventListener('click', ()=>{
   const name = document.getElementById('customName').value.trim();
-  const cal = parseFloat(document.getElementById('customCal').value);
-  if(!name || isNaN(cal)){ toast('Name and calories required.'); return; }
+  const rawCal = parseFloat(document.getElementById('customCal').value);
+  if(!name || isNaN(rawCal)){ toast('Name and calories required.'); return; }
+  const s = getCustomFoodScaled();
   addDayEntry({
-    name, cal,
-    p: parseFloat(document.getElementById('customP').value)||0,
-    c: parseFloat(document.getElementById('customC').value)||0,
-    f: parseFloat(document.getElementById('customF').value)||0,
+    name: name + (s.grams!==100 ? ` (${s.grams}g)` : ''),
+    cal: round1(s.cal), p: round1(s.p), c: round1(s.c), f: round1(s.f),
   });
   ['customName','customCal','customP','customC','customF'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('customGrams').value = 100;
+  updateCustomFoodPreview();
 });
 function addDayEntry(entry){
   if(!state.dailyLogs[trackerDate]) state.dailyLogs[trackerDate] = [];
