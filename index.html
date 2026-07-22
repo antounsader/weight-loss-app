@@ -1192,6 +1192,11 @@ const defaultState = {
     { id:'f11', name:'Potatoes (boiled)', cal:0.87, p:0.019, c:0.201, f:0.001, fiber:0.018, sugar:0.009, sodium:0.06, potassium:3.79, calcium:0.08, iron:0.0031, magnesium:0.2, vitA:0, vitC:0.13, vitD:0, vitB12:0 },
     { id:'f12', name:'Chicken Breast (cooked)', cal:1.65, p:0.31, c:0, f:0.036, fiber:0, sugar:0, sodium:0.74, potassium:2.56, calcium:0.15, iron:0.01, magnesium:0.29, vitA:0.09, vitC:0, vitD:0.001, vitB12:0.003 },
     { id:'f13', name:'Avocado', cal:1.6, p:0.02, c:0.085, f:0.147, fiber:0.067, sugar:0.007, sodium:0.07, potassium:4.85, calcium:0.12, iron:0.0055, magnesium:0.29, vitA:0.07, vitC:0.1, vitD:0, vitB12:0 },
+    { id:'f14', name:'Grape Molasses with Tahini', cal:4.43, p:0.085, c:0.46, f:0.265, fiber:0.045, sugar:0.33, sodium:0.2, potassium:4.35, calcium:2.55, iron:0.08, magnesium:0.68, vitA:0, vitC:0, vitD:0, vitB12:0 },
+    { id:'f15', name:'Turkish Flatbread (Pide)', cal:2.75, p:0.09, c:0.55, f:0.012, fiber:0.024, sugar:0.02, sodium:5.36, potassium:1.05, calcium:1.0, iron:0.025, magnesium:0.25, vitA:0, vitC:0, vitD:0, vitB12:0 },
+    { id:'f16', name:'Scrambled Eggs', cal:1.48, p:0.1, c:0.016, f:0.11, fiber:0, sugar:0.011, sodium:2.07, potassium:1.37, calcium:0.68, iron:0.012, magnesium:0.1, vitA:1.6, vitC:0, vitD:0.01, vitB12:0.006 },
+    { id:'f17', name:'Chorizo', cal:4.55, p:0.24, c:0.019, f:0.38, fiber:0, sugar:0.005, sodium:12.35, potassium:3.4, calcium:0.21, iron:0.023, magnesium:0.2, vitA:0, vitC:0, vitD:0, vitB12:0.03 },
+    { id:'f18', name:'Manchego Cheese', cal:4.0, p:0.25, c:0.005, f:0.33, fiber:0, sugar:0.005, sodium:8.0, potassium:1.0, calcium:7.0, iron:0.005, magnesium:0.28, vitA:2.0, vitC:0, vitD:0.005, vitB12:0.01 },
   ],
   combos: [
     { id:'combo1', name:'Usual Protein Shake (2 scoops Rite protein, banana, 10g chia, 10g flax)', cal:336, p:28, c:34, f:7, parts:[] },
@@ -1690,11 +1695,11 @@ function renderWorkoutsTab(){
    FOOD DATABASE TAB
 ============================================================ */
 function allFoodItems(){
-  // unify foods + combos into one selectable list
+  // unify foods + combos into one selectable list, alphabetical for easy scanning in dropdowns
   return [
     ...state.foods.map(f=>({...f, type:'food'})),
     ...state.combos.map(c=>({...c, type:'combo'})),
-  ];
+  ].sort((a,b)=> a.name.localeCompare(b.name));
 }
 document.getElementById('toggleMicros').addEventListener('click', ()=>{
   const el = document.getElementById('microFields');
@@ -1837,7 +1842,7 @@ function populateFoodSelects(){
   const items = allFoodItems();
   const options = items.map(it=>`<option value="${it.type}:${it.id}">${it.name}${it.type==='combo'?' (combo)':''}</option>`).join('');
   document.getElementById('quickFoodSelect').innerHTML = options || '<option value="">No foods yet</option>';
-  document.getElementById('comboFoodSelect').innerHTML = state.foods.map(f=>`<option value="${f.id}">${f.name}</option>`).join('') || '<option value="">Add foods first</option>';
+  document.getElementById('comboFoodSelect').innerHTML = [...state.foods].sort((a,b)=>a.name.localeCompare(b.name)).map(f=>`<option value="${f.id}">${f.name}</option>`).join('') || '<option value="">Add foods first</option>';
   updateQuickFoodPreview();
 }
 
