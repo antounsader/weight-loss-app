@@ -752,9 +752,10 @@ footer{
           <label>Quick add from database</label>
           <div class="flex gap8">
             <select id="quickFoodSelect" style="flex:1;"></select>
-            <input type="number" id="quickFoodQty" value="1" min="0.1" step="0.1" style="width:80px;">
+            <input type="number" id="quickFoodQty" value="100" min="0.1" step="1" style="width:80px;">
             <button class="btn secondary" id="quickFoodAdd">Add</button>
           </div>
+          <div class="hint" id="quickFoodPreview" style="margin-top:6px;">—</div>
         </div>
         <div class="divider"></div>
         <div class="field">
@@ -970,15 +971,40 @@ footer{
 
     <div class="grid grid-2">
       <div class="card">
-        <div class="card-title">Add a Food</div>
-        <div class="field"><label>Name</label><input type="text" id="foodName" placeholder="Rite Protein (1 scoop)"></div>
+        <div class="card-title">Add a Food <span style="text-transform:none; font-weight:400; color:var(--ink-soft);">— values per 100g</span></div>
+        <p class="hint" style="margin-top:-4px;">Enter nutrition exactly as it appears on the label (per 100g). The app stores it per-gram internally so any quantity auto-scales.</p>
+        <div class="field"><label>Name</label><input type="text" id="foodName" placeholder="Rite Protein"></div>
         <div class="field-row">
-          <div class="field"><label>Calories</label><input type="number" id="foodCal" placeholder="120"></div>
-          <div class="field"><label>Protein (g)</label><input type="number" id="foodP" placeholder="24"></div>
+          <div class="field"><label>Calories /100g</label><input type="number" id="foodCal" placeholder="400"></div>
+          <div class="field"><label>Protein /100g</label><input type="number" id="foodP" placeholder="80"></div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Carbs (g)</label><input type="number" id="foodC" placeholder="3"></div>
-          <div class="field"><label>Fat (g)</label><input type="number" id="foodF" placeholder="1.5"></div>
+          <div class="field"><label>Carbs /100g</label><input type="number" id="foodC" placeholder="10"></div>
+          <div class="field"><label>Fat /100g</label><input type="number" id="foodF" placeholder="5"></div>
+        </div>
+        <button type="button" class="btn ghost small" id="toggleMicros" style="margin-bottom:10px;">+ Add vitamins &amp; minerals (optional)</button>
+        <div id="microFields" style="display:none;">
+          <div class="field-row">
+            <div class="field"><label>Fiber (g)</label><input type="number" id="foodFiber" placeholder="0"></div>
+            <div class="field"><label>Sugar (g)</label><input type="number" id="foodSugar" placeholder="0"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Sodium (mg)</label><input type="number" id="foodSodium" placeholder="0"></div>
+            <div class="field"><label>Potassium (mg)</label><input type="number" id="foodPotassium" placeholder="0"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Calcium (mg)</label><input type="number" id="foodCalcium" placeholder="0"></div>
+            <div class="field"><label>Iron (mg)</label><input type="number" id="foodIron" placeholder="0"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Magnesium (mg)</label><input type="number" id="foodMagnesium" placeholder="0"></div>
+            <div class="field"><label>Vitamin A (mcg)</label><input type="number" id="foodVitA" placeholder="0"></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Vitamin C (mg)</label><input type="number" id="foodVitC" placeholder="0"></div>
+            <div class="field"><label>Vitamin D (mcg)</label><input type="number" id="foodVitD" placeholder="0"></div>
+          </div>
+          <div class="field"><label>Vitamin B12 (mcg)</label><input type="number" id="foodVitB12" placeholder="0"></div>
         </div>
         <button class="btn terracotta block" id="addFoodBtn">Add to Database</button>
 
@@ -988,7 +1014,7 @@ footer{
         <div class="field"><label>Combo Name</label><input type="text" id="comboName" placeholder="Usual Protein Shake"></div>
         <div class="field flex gap8" style="align-items:flex-end;">
           <div style="flex:1;"><label>Pick food</label><select id="comboFoodSelect"></select></div>
-          <div style="width:80px;"><label>Qty</label><input type="number" id="comboFoodQty" value="1" step="0.1"></div>
+          <div style="width:80px;"><label>Grams</label><input type="number" id="comboFoodQty" value="100" step="1"></div>
           <button class="btn secondary" id="comboAddPart">Add</button>
         </div>
         <div id="comboPartsChips" style="margin:6px 0 14px;"></div>
@@ -996,10 +1022,10 @@ footer{
       </div>
 
       <div class="card">
-        <div class="card-title">Your Foods &amp; Combos</div>
+        <div class="card-title">Your Foods &amp; Combos <span style="text-transform:none; font-weight:400; color:var(--ink-soft);">— shown per 100g</span></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Item</th><th class="num">Kcal</th><th class="num">P</th><th class="num">C</th><th class="num">F</th><th></th></tr></thead>
+            <thead><tr><th>Item</th><th class="num">Kcal</th><th class="num">P</th><th class="num">C</th><th class="num">F</th><th></th><th></th></tr></thead>
             <tbody id="foodDbTable"></tbody>
           </table>
         </div>
@@ -1111,6 +1137,18 @@ footer{
   </div>
 </div>
 
+<!-- Nutrition Facts Modal -->
+<div class="modal-backdrop" id="nutritionModalBackdrop">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-head">
+      <h3 id="nutritionModalTitle">Nutrition Facts</h3>
+      <button class="icon-btn" id="closeNutritionModal">✕</button>
+    </div>
+    <p class="hint" style="margin-top:-8px;">Per 100g</p>
+    <div id="nutritionModalBody"></div>
+  </div>
+</div>
+
 <div class="toast" id="toast">Saved.</div>
 
 <script>
@@ -1128,16 +1166,21 @@ const defaultState = {
     { id:'seed5', date:'2026-07-21', weight:89, bf:17.5, source:'manual', note:'Weight from scale; BF% estimated from historical trend (a Renpho scan the same week read 27.8%, but that broke a year-long consistent lean-mass trend and is treated as bad data). Confirm with a fresh clean scan when possible.', photo:null },
   ],
   goals: { targetBF:14.8, targetWeight:77, weeklyDeficit:3850, workouts:4, calPerWorkout:330 },
+  // All values PER GRAM (i.e. per-100g label values ÷ 100), so any logged quantity is a straight
+  // multiplication. Sourced from standard nutrition database figures for each food's typical form.
   foods: [
-    { id:'f1', name:'Rite Protein (1 scoop)', cal:120, p:24, c:3, f:1.5 },
-    { id:'f2', name:'Banana (80g)', cal:71, p:0.9, c:18, f:0.3 },
-    { id:'f3', name:'Chia Seeds (5g)', cal:24, p:0.8, c:2.1, f:1.5 },
-    { id:'f4', name:'Water', cal:0, p:0, c:0, f:0 },
-    { id:'f5', name:'Whole Egg (1 large)', cal:72, p:6.3, c:0.4, f:4.8 },
-    { id:'f6', name:'Chicken Breast (100g cooked)', cal:165, p:31, c:0, f:3.6 },
-    { id:'f7', name:'White Rice (1 cup cooked)', cal:205, p:4.3, c:45, f:0.4 },
-    { id:'f8', name:'Cottage Cheese (half tub)', cal:110, p:15, c:9, f:0 },
-    { id:'f9', name:'Strawberry Whey Protein Yogurt (150g pot)', cal:94.5, p:15, c:7.5, f:0.3 },
+    { id:'f1', name:'Banana', cal:0.89, p:0.011, c:0.228, f:0.003, fiber:0.026, sugar:0.122, sodium:0.01, potassium:3.58, calcium:0.05, iron:0.0026, magnesium:0.27, vitA:0.03, vitC:0.087, vitD:0, vitB12:0 },
+    { id:'f2', name:'Blueberries', cal:0.57, p:0.007, c:0.145, f:0.003, fiber:0.024, sugar:0.1, sodium:0.01, potassium:0.77, calcium:0.06, iron:0.0028, magnesium:0.06, vitA:0.03, vitC:0.097, vitD:0, vitB12:0 },
+    { id:'f3', name:'Chia Seeds', cal:4.86, p:0.165, c:0.421, f:0.307, fiber:0.344, sugar:0, sodium:0.16, potassium:4.07, calcium:6.31, iron:0.077, magnesium:3.35, vitA:0.01, vitC:0.016, vitD:0, vitB12:0 },
+    { id:'f4', name:'Flaxseeds', cal:5.34, p:0.183, c:0.289, f:0.422, fiber:0.273, sugar:0.016, sodium:0.3, potassium:8.13, calcium:2.55, iron:0.057, magnesium:3.92, vitA:0, vitC:0.006, vitD:0, vitB12:0 },
+    { id:'f5', name:'Rite Protein', cal:4.0, p:0.8, c:0.1, f:0.05, fiber:0.01, sugar:0.02, sodium:3.0, potassium:2.0, calcium:2.0, iron:0.005, magnesium:0.2, vitA:0, vitC:0, vitD:0, vitB12:0.01 },
+    { id:'f6', name:'Alpro Barista Coconut', cal:0.48, p:0.001, c:0.03, f:0.037, fiber:0.001, sugar:0.03, sodium:0.4, potassium:0.4, calcium:1.2, iron:0, magnesium:0.05, vitA:0.4, vitC:0, vitD:0.0075, vitB12:0.0038 },
+    { id:'f7', name:'Multigrain Toast', cal:2.65, p:0.09, c:0.46, f:0.04, fiber:0.06, sugar:0.05, sodium:4.0, potassium:2.2, calcium:1.0, iron:0.03, magnesium:0.6, vitA:0, vitC:0, vitD:0, vitB12:0 },
+    { id:'f8', name:'Eggs', cal:1.43, p:0.126, c:0.007, f:0.095, fiber:0, sugar:0.004, sodium:1.42, potassium:1.38, calcium:0.56, iron:0.0175, magnesium:0.12, vitA:1.6, vitC:0, vitD:0.02, vitB12:0.0089 },
+    { id:'f9', name:'Labneh', cal:1.2, p:0.06, c:0.04, f:0.09, fiber:0, sugar:0.04, sodium:0.5, potassium:1.3, calcium:1.5, iron:0.001, magnesium:0.1, vitA:0.6, vitC:0.005, vitD:0, vitB12:0.003 },
+    { id:'f10', name:'Minced Meat (lean beef, cooked)', cal:2.15, p:0.26, c:0, f:0.12, fiber:0, sugar:0, sodium:0.75, potassium:3.18, calcium:0.18, iron:0.026, magnesium:0.21, vitA:0, vitC:0, vitD:0.001, vitB12:0.024 },
+    { id:'f11', name:'Potatoes (boiled)', cal:0.87, p:0.019, c:0.201, f:0.001, fiber:0.018, sugar:0.009, sodium:0.06, potassium:3.79, calcium:0.08, iron:0.0031, magnesium:0.2, vitA:0, vitC:0.13, vitD:0, vitB12:0 },
+    { id:'f12', name:'Chicken Breast (cooked)', cal:1.65, p:0.31, c:0, f:0.036, fiber:0, sugar:0, sodium:0.74, potassium:2.56, calcium:0.15, iron:0.01, magnesium:0.29, vitA:0.09, vitC:0, vitD:0.001, vitB12:0.003 },
   ],
   combos: [
     { id:'combo1', name:'Usual Protein Shake (2 scoops Rite protein, banana, 10g chia, 10g flax)', cal:336, p:28, c:34, f:7, parts:[] },
@@ -1642,18 +1685,43 @@ function allFoodItems(){
     ...state.combos.map(c=>({...c, type:'combo'})),
   ];
 }
+document.getElementById('toggleMicros').addEventListener('click', ()=>{
+  const el = document.getElementById('microFields');
+  const showing = el.style.display !== 'none';
+  el.style.display = showing ? 'none' : 'block';
+  document.getElementById('toggleMicros').textContent = showing ? '+ Add vitamins & minerals (optional)' : '− Hide vitamins & minerals';
+});
+
+const MICRO_FIELD_IDS = {
+  fiber:'foodFiber', sugar:'foodSugar', sodium:'foodSodium', potassium:'foodPotassium',
+  calcium:'foodCalcium', iron:'foodIron', magnesium:'foodMagnesium',
+  vitA:'foodVitA', vitC:'foodVitC', vitD:'foodVitD', vitB12:'foodVitB12',
+};
+const NUTRIENT_LABELS = {
+  cal:['Calories','kcal'], p:['Protein','g'], c:['Carbs','g'], f:['Fat','g'],
+  fiber:['Fiber','g'], sugar:['Sugar','g'], sodium:['Sodium','mg'], potassium:['Potassium','mg'],
+  calcium:['Calcium','mg'], iron:['Iron','mg'], magnesium:['Magnesium','mg'],
+  vitA:['Vitamin A','mcg'], vitC:['Vitamin C','mg'], vitD:['Vitamin D','mcg'], vitB12:['Vitamin B12','mcg'],
+};
+
 document.getElementById('addFoodBtn').addEventListener('click', ()=>{
   const name = document.getElementById('foodName').value.trim();
-  const cal = parseFloat(document.getElementById('foodCal').value);
-  if(!name || isNaN(cal)){ toast('Name and calories required.'); return; }
-  state.foods.push({
-    id: uid(), name, cal,
-    p: parseFloat(document.getElementById('foodP').value)||0,
-    c: parseFloat(document.getElementById('foodC').value)||0,
-    f: parseFloat(document.getElementById('foodF').value)||0,
+  const cal100 = parseFloat(document.getElementById('foodCal').value);
+  if(!name || isNaN(cal100)){ toast('Name and calories required.'); return; }
+  // Form takes values per-100g (label-style); divide by 100 to store per-gram.
+  const food = {
+    id: uid(), name,
+    cal: cal100/100,
+    p: (parseFloat(document.getElementById('foodP').value)||0)/100,
+    c: (parseFloat(document.getElementById('foodC').value)||0)/100,
+    f: (parseFloat(document.getElementById('foodF').value)||0)/100,
+  };
+  Object.keys(MICRO_FIELD_IDS).forEach(key=>{
+    food[key] = (parseFloat(document.getElementById(MICRO_FIELD_IDS[key]).value)||0)/100;
   });
+  state.foods.push(food);
   saveState();
-  ['foodName','foodCal','foodP','foodC','foodF'].forEach(id=>document.getElementById(id).value='');
+  ['foodName','foodCal','foodP','foodC','foodF', ...Object.values(MICRO_FIELD_IDS)].forEach(id=>document.getElementById(id).value='');
   toast('Added to database.');
   renderAll();
 });
@@ -1669,7 +1737,7 @@ document.getElementById('comboAddPart').addEventListener('click', ()=>{
 });
 function renderComboChips(){
   document.getElementById('comboPartsChips').innerHTML = comboParts.map((p,i)=>
-    `<span class="combo-chip">${p.qty}× ${p.name}<span class="x" data-remove-part="${i}">✕</span></span>`
+    `<span class="combo-chip">${p.qty}g ${p.name}<span class="x" data-remove-part="${i}">✕</span></span>`
   ).join('') || '<span class="hint">No parts added yet.</span>';
 }
 document.getElementById('comboPartsChips').addEventListener('click', e=>{
@@ -1704,24 +1772,54 @@ function renderFoodDbTable(){
   const tbody = document.getElementById('foodDbTable');
   const items = allFoodItems();
   if(!items.length){ tbody.innerHTML = `<tr class="empty-row"><td colspan="6">No foods yet.</td></tr>`; return; }
-  tbody.innerHTML = items.map(it=>`
+  tbody.innerHTML = items.map(it=>{
+    // Foods are stored per-gram; combos are stored as flat per-serving totals — display foods ×100 for a per-100g view.
+    const mult = it.type==='food' ? 100 : 1;
+    return `
     <tr>
       <td>${it.name} ${it.type==='combo' ? '<span class="tag combo">combo</span>' : ''}</td>
-      <td class="num">${round1(it.cal)}</td>
-      <td class="num">${round1(it.p)}</td>
-      <td class="num">${round1(it.c)}</td>
-      <td class="num">${round1(it.f)}</td>
+      <td class="num">${round1(it.cal*mult)}</td>
+      <td class="num">${round1(it.p*mult)}</td>
+      <td class="num">${round1(it.c*mult)}</td>
+      <td class="num">${round1(it.f*mult)}</td>
+      <td>${it.type==='food' ? `<button class="icon-btn" data-view-nutrition="${it.id}" title="Full nutrition">ⓘ</button>` : ''}</td>
       <td><button class="icon-btn" data-del-item="${it.type}:${it.id}">✕</button></td>
     </tr>
-  `).join('');
+  `;
+  }).join('');
 }
 document.getElementById('foodDbTable').addEventListener('click', e=>{
-  const btn = e.target.closest('[data-del-item]');
-  if(!btn) return;
-  const [type,id] = btn.dataset.delItem.split(':');
-  if(type==='food') state.foods = state.foods.filter(f=>f.id!==id);
-  else state.combos = state.combos.filter(c=>c.id!==id);
-  saveState(); renderAll();
+  const delBtn = e.target.closest('[data-del-item]');
+  if(delBtn){
+    const [type,id] = delBtn.dataset.delItem.split(':');
+    if(type==='food') state.foods = state.foods.filter(f=>f.id!==id);
+    else state.combos = state.combos.filter(c=>c.id!==id);
+    saveState(); renderAll();
+    return;
+  }
+  const viewBtn = e.target.closest('[data-view-nutrition]');
+  if(viewBtn){
+    showNutritionModal(viewBtn.dataset.viewNutrition);
+  }
+});
+
+function showNutritionModal(foodId){
+  const food = state.foods.find(f=>f.id===foodId);
+  if(!food) return;
+  document.getElementById('nutritionModalTitle').textContent = food.name;
+  const rows = Object.keys(NUTRIENT_LABELS).map(key=>{
+    const [label, unit] = NUTRIENT_LABELS[key];
+    const val = (food[key]||0) * 100;
+    return `<div class="assumption-line"><span>${label}</span><b class="mono">${round1(val)} ${unit}</b></div>`;
+  }).join('');
+  document.getElementById('nutritionModalBody').innerHTML = rows;
+  document.getElementById('nutritionModalBackdrop').classList.add('active');
+}
+document.getElementById('closeNutritionModal').addEventListener('click', ()=>{
+  document.getElementById('nutritionModalBackdrop').classList.remove('active');
+});
+document.getElementById('nutritionModalBackdrop').addEventListener('click', e=>{
+  if(e.target.id==='nutritionModalBackdrop') document.getElementById('nutritionModalBackdrop').classList.remove('active');
 });
 
 function populateFoodSelects(){
@@ -1729,6 +1827,7 @@ function populateFoodSelects(){
   const options = items.map(it=>`<option value="${it.type}:${it.id}">${it.name}${it.type==='combo'?' (combo)':''}</option>`).join('');
   document.getElementById('quickFoodSelect').innerHTML = options || '<option value="">No foods yet</option>';
   document.getElementById('comboFoodSelect').innerHTML = state.foods.map(f=>`<option value="${f.id}">${f.name}</option>`).join('') || '<option value="">Add foods first</option>';
+  updateQuickFoodPreview();
 }
 
 /* ============================================================
@@ -1749,18 +1848,39 @@ function shiftTrackerDate(delta){
 }
 function getDayEntries(date){ return state.dailyLogs[date] || []; }
 
-document.getElementById('quickFoodAdd').addEventListener('click', ()=>{
+// Foods are stored per-gram, so qty = grams and the math is a direct multiply.
+// Combos are stored as flat per-serving totals, so qty = number of servings.
+function getSelectedQuickFood(){
   const val = document.getElementById('quickFoodSelect').value;
-  if(!val) return;
+  if(!val) return null;
   const [type,id] = val.split(':');
   const src = type==='combo' ? state.combos.find(c=>c.id===id) : state.foods.find(f=>f.id===id);
-  if(!src) return;
-  const qty = parseFloat(document.getElementById('quickFoodQty').value) || 1;
+  if(!src) return null;
+  return { type, src };
+}
+function updateQuickFoodPreview(){
+  const sel = getSelectedQuickFood();
+  const preview = document.getElementById('quickFoodPreview');
+  if(!sel){ preview.textContent = '—'; return; }
+  const qty = parseFloat(document.getElementById('quickFoodQty').value) || 0;
+  const { src } = sel;
+  preview.textContent = `→ ${round1(src.cal*qty)} kcal · P ${round1(src.p*qty)}g · C ${round1(src.c*qty)}g · F ${round1(src.f*qty)}g`;
+}
+document.getElementById('quickFoodSelect').addEventListener('change', updateQuickFoodPreview);
+document.getElementById('quickFoodQty').addEventListener('input', updateQuickFoodPreview);
+
+document.getElementById('quickFoodAdd').addEventListener('click', ()=>{
+  const sel = getSelectedQuickFood();
+  if(!sel) return;
+  const { type, src } = sel;
+  const qty = parseFloat(document.getElementById('quickFoodQty').value) || 0;
+  if(qty<=0) return;
   addDayEntry({
-    name: src.name + (qty!==1 ? ` ×${qty}` : ''),
+    name: src.name + (type==='combo' ? (qty!==1 ? ` ×${qty}` : '') : ` (${qty}g)`),
     cal: round1(src.cal*qty), p: round1(src.p*qty), c: round1(src.c*qty), f: round1(src.f*qty),
   });
-  document.getElementById('quickFoodQty').value = 1;
+  document.getElementById('quickFoodQty').value = 100;
+  updateQuickFoodPreview();
 });
 document.getElementById('customFoodAdd').addEventListener('click', ()=>{
   const name = document.getElementById('customName').value.trim();
