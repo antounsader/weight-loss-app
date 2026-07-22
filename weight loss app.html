@@ -1,0 +1,2395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Field Log — Weight Journal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --paper:#f3ead5;
+  --paper-raised:#faf4e4;
+  --paper-dark:#e8dcbd;
+  --ink:#2b2620;
+  --ink-soft:#5a5347;
+  --forest:#2f4a3c;
+  --forest-dark:#1c2f26;
+  --forest-tint:#e3ebe3;
+  --terracotta:#c1622d;
+  --terracotta-dark:#9c4c22;
+  --terracotta-tint:#f3e0d1;
+  --gold:#b8923f;
+  --gold-tint:#f2e8cf;
+  --line:rgba(43,38,32,0.18);
+  --line-strong:rgba(43,38,32,0.32);
+  --danger:#a83232;
+  --success:#3f6b4a;
+  --shadow-card: 0 1px 0 rgba(43,38,32,0.05), 0 8px 20px -12px rgba(43,38,32,0.35);
+  --radius: 10px;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+
+body{
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(circle at 1px 1px, rgba(43,38,32,0.055) 1px, transparent 0);
+  background-size: 22px 22px;
+  color: var(--ink);
+  font-family: 'IBM Plex Sans', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+::selection{ background: var(--terracotta); color: var(--paper-raised); }
+
+::-webkit-scrollbar{ width:10px; height:10px; }
+::-webkit-scrollbar-track{ background: transparent; }
+::-webkit-scrollbar-thumb{ background: var(--line-strong); border-radius: 8px; }
+
+h1,h2,h3,h4{
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  color: var(--forest-dark);
+  margin: 0 0 4px 0;
+  letter-spacing: -0.01em;
+}
+
+.mono{ font-family:'IBM Plex Mono', monospace; }
+
+/* ---------------- HEADER ---------------- */
+.app-header{
+  padding: 28px 6vw 0 6vw;
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap: 14px;
+}
+.brand-mark{
+  width: 46px; height: 46px;
+  border: 2px solid var(--forest-dark);
+  border-radius: 50%;
+  display:flex;align-items:center;justify-content:center;
+  background: var(--paper-raised);
+  position: relative;
+  flex: none;
+}
+.brand-mark svg{ width: 24px; height:24px; }
+.brand-title{
+  font-family:'Fraunces', serif;
+  font-size: 28px;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1;
+  color: var(--forest-dark);
+}
+.brand-sub{
+  font-family:'IBM Plex Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-top: 3px;
+}
+.header-date{
+  font-family:'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--ink-soft);
+  text-align:right;
+  border-right: 2px solid var(--terracotta);
+  padding-right: 12px;
+}
+.header-date strong{ display:block; color:var(--ink); font-size:14px; }
+
+/* ---------------- TABS ---------------- */
+.tab-strip{
+  margin: 22px 6vw 0 6vw;
+  display:flex;
+  gap: 6px;
+  border-bottom: 2px solid var(--forest-dark);
+  overflow-x:auto;
+}
+.tab-btn{
+  font-family:'IBM Plex Mono', monospace;
+  font-size: 12.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: var(--paper-dark);
+  border: 2px solid var(--forest-dark);
+  border-bottom: none;
+  color: var(--ink-soft);
+  padding: 10px 18px 12px 18px;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  position: relative;
+  top: 2px;
+  transition: all .15s ease;
+  white-space: nowrap;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.tab-btn .tnum{
+  font-family:'Fraunces',serif;
+  font-style:italic;
+  font-size:15px;
+  opacity:.6;
+}
+.tab-btn:hover{ background: var(--paper-raised); color: var(--ink); }
+.tab-btn.active{
+  background: var(--forest-dark);
+  color: var(--paper-raised);
+  top: 0;
+  padding-top: 12px;
+  padding-bottom: 14px;
+  box-shadow: 0 -3px 0 var(--terracotta) inset;
+}
+.tab-btn.active .tnum{ opacity: .85; color: var(--gold); }
+
+/* ---------------- LAYOUT ---------------- */
+main{
+  padding: 26px 6vw 80px 6vw;
+}
+.panel{ display:none; animation: fadeUp .35s ease; }
+.panel.active{ display:block; }
+@keyframes fadeUp{
+  from{ opacity:0; transform: translateY(8px); }
+  to{ opacity:1; transform:none; }
+}
+
+.grid{
+  display:grid;
+  gap: 18px;
+}
+.grid-3{ grid-template-columns: repeat(3, 1fr); }
+.grid-4{ grid-template-columns: repeat(4, 1fr); }
+.grid-2{ grid-template-columns: 1.1fr 0.9fr; }
+@media (max-width: 980px){
+  .grid-3, .grid-4, .grid-2{ grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 640px){
+  .grid-3, .grid-4, .grid-2{ grid-template-columns: 1fr; }
+}
+
+.card{
+  background: var(--paper-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+  position: relative;
+}
+.card::before{
+  content:"";
+  position:absolute; inset:6px;
+  border: 1px dashed var(--line);
+  border-radius: 7px;
+  pointer-events:none;
+}
+.card-tight{ padding: 16px; }
+.card-title{
+  font-family:'IBM Plex Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-soft);
+  margin-bottom: 10px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.card-title svg{ width:14px;height:14px; opacity:.7; }
+
+.section-title{
+  display:flex;
+  align-items:baseline;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--line-strong);
+}
+.section-title h2{ font-size: 26px; }
+.section-title span{
+  font-family:'IBM Plex Mono', monospace;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.period-heading{
+  display:flex; align-items:center; gap:10px;
+  margin: 32px 0 14px;
+  font-family:'Fraunces', serif; font-style:italic; font-weight:600;
+  font-size: 20px; color: var(--forest-dark);
+}
+.period-heading:first-of-type{ margin-top: 6px; }
+.period-heading::after{
+  content:""; flex:1; height:1px; background: var(--line-strong);
+}
+.period-heading .tnum{
+  font-family:'IBM Plex Mono', monospace; font-style:normal; font-size:11px;
+  color: var(--paper-raised); background: var(--terracotta);
+  padding: 2px 8px; border-radius: 20px; letter-spacing:.06em; text-transform:uppercase;
+}
+
+/* stat display */
+.stat-value{
+  font-family:'Fraunces', serif;
+  font-size: 40px;
+  font-weight: 600;
+  color: var(--forest-dark);
+  line-height: 1;
+  display:flex;
+  align-items:baseline;
+  gap:6px;
+}
+.stat-value small{ font-family:'IBM Plex Mono',monospace; font-size:14px; font-weight:500; color: var(--ink-soft); }
+.stat-delta{
+  margin-top:8px;
+  font-family:'IBM Plex Mono', monospace;
+  font-size: 12px;
+  display:inline-flex;
+  align-items:center;
+  gap:4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+.stat-delta.down{ background: var(--forest-tint); color: var(--forest); }
+.stat-delta.up{ background: var(--terracotta-tint); color: var(--terracotta-dark); }
+.stat-delta.flat{ background: var(--paper-dark); color: var(--ink-soft); }
+
+/* forms */
+label{
+  display:block;
+  font-family:'IBM Plex Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  margin-bottom: 5px;
+}
+input, select, textarea{
+  width: 100%;
+  font-family:'IBM Plex Sans', sans-serif;
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--paper);
+  border: 1.5px solid var(--line-strong);
+  border-radius: 6px;
+  padding: 9px 10px;
+  transition: border-color .15s ease, background .15s ease;
+}
+input:focus, select:focus, textarea:focus{
+  outline: none;
+  border-color: var(--forest);
+  background: var(--paper-raised);
+}
+.field{ margin-bottom: 14px; }
+.field-row{
+  display:grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px,1fr));
+  gap: 12px;
+}
+.hint{ font-size:11.5px; color: var(--ink-soft); margin-top:4px; }
+
+button{ font-family:'IBM Plex Sans', sans-serif; cursor:pointer; }
+.btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  border: 2px solid var(--forest-dark);
+  background: var(--forest-dark);
+  color: var(--paper-raised);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 16px;
+  border-radius: 7px;
+  transition: transform .1s ease, box-shadow .15s ease;
+}
+.btn:hover{ transform: translateY(-1px); box-shadow: 0 4px 0 var(--forest-dark); }
+.btn:active{ transform: translateY(1px); box-shadow:none; }
+.btn.secondary{ background: transparent; color: var(--forest-dark); }
+.btn.terracotta{ background: var(--terracotta); border-color: var(--terracotta-dark); }
+.btn.terracotta:hover{ box-shadow: 0 4px 0 var(--terracotta-dark); }
+.btn.ghost{ background: transparent; border-color: var(--line-strong); color: var(--ink-soft); }
+.btn.ghost:hover{ box-shadow: 0 4px 0 var(--line-strong); }
+.btn.small{ padding: 5px 10px; font-size: 11.5px; border-width:1.5px; }
+.btn.block{ width:100%; justify-content:center; }
+.btn[disabled]{ opacity:.45; cursor:not-allowed; transform:none; box-shadow:none; }
+.icon-btn{
+  background: transparent; border: 1.5px solid var(--line-strong);
+  border-radius: 6px; width: 30px; height:30px;
+  display:flex; align-items:center; justify-content:center;
+  color: var(--ink-soft);
+}
+.icon-btn:hover{ border-color: var(--danger); color: var(--danger); }
+.icon-btn svg{ width:14px; height:14px; }
+
+/* table */
+table{ width:100%; border-collapse: collapse; }
+th{
+  text-align:left;
+  font-family:'IBM Plex Mono', monospace;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  padding: 8px 10px;
+  border-bottom: 1.5px solid var(--line-strong);
+}
+td{
+  padding: 10px 10px;
+  border-bottom: 1px dashed var(--line);
+  font-size: 13.5px;
+  vertical-align: middle;
+}
+tr:last-child td{ border-bottom: none; }
+td.num, th.num{ font-family:'IBM Plex Mono', monospace; text-align:right; }
+.table-wrap{ overflow-x:auto; }
+.empty-row td{ text-align:center; color: var(--ink-soft); font-style:italic; padding: 22px 10px; }
+
+.tag{
+  display:inline-block;
+  font-family:'IBM Plex Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: 2px 7px;
+  border-radius: 20px;
+  background: var(--paper-dark);
+  color: var(--ink-soft);
+}
+.tag.combo{ background: var(--gold-tint); color: var(--terracotta-dark); }
+.tag.soon{ background: var(--paper-dark); color: var(--ink-soft); border:1px dashed var(--line-strong); }
+
+/* macro bars */
+.macro-bar-row{ margin-bottom: 14px; }
+.macro-bar-row:last-child{ margin-bottom:0; }
+.macro-label{ display:flex; justify-content:space-between; font-family:'IBM Plex Mono',monospace; font-size:11.5px; margin-bottom:5px; color: var(--ink-soft);}
+.macro-label b{ color:var(--ink); }
+.bar-track{ height:9px; background: var(--paper-dark); border-radius:6px; overflow:hidden; border:1px solid var(--line);}
+.bar-fill{ height:100%; border-radius:6px; transition: width .4s ease; }
+.bar-fill.protein{ background: var(--forest); }
+.bar-fill.carbs{ background: var(--gold); }
+.bar-fill.fat{ background: var(--terracotta); }
+.bar-fill.kcal{ background: var(--forest-dark); }
+
+/* ring */
+.ring-wrap{ display:flex; align-items:center; gap:22px; flex-wrap:wrap; }
+.ring{ position:relative; width:150px; height:150px; flex:none; }
+.ring svg{ transform: rotate(-90deg); width:150px;height:150px; }
+.ring-center{
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+}
+.ring-center .big{ font-family:'Fraunces',serif; font-size:26px; font-weight:600; color:var(--forest-dark); line-height:1;}
+.ring-center .small{ font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--ink-soft); margin-top:4px; text-transform:uppercase; letter-spacing:.06em;}
+
+/* photo upload dropzone */
+.dropzone{
+  border: 2px dashed var(--line-strong);
+  border-radius: 8px;
+  padding: 22px;
+  text-align:center;
+  cursor:pointer;
+  color: var(--ink-soft);
+  transition: border-color .15s, background .15s;
+  background: var(--paper);
+}
+.dropzone:hover{ border-color: var(--terracotta); background: var(--terracotta-tint); }
+.dropzone svg{ width:26px; height:26px; margin-bottom:8px; opacity:.6;}
+.dropzone input{ display:none; }
+
+.thumb-row{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+.thumb{
+  width: 64px; height:64px; border-radius:8px; object-fit:cover;
+  border: 2px solid var(--paper-raised); box-shadow: 0 0 0 1.5px var(--line-strong);
+}
+
+/* connect-app cards */
+.connect-row{ display:flex; gap:12px; flex-wrap:wrap; }
+.connect-card{
+  flex:1; min-width:150px;
+  border:1.5px dashed var(--line-strong);
+  border-radius:8px; padding:14px; text-align:center;
+  background: var(--paper);
+}
+.connect-card svg{ width:22px;height:22px; margin-bottom:6px; color: var(--ink-soft); }
+.connect-card .name{ font-weight:600; font-size:13px; margin-bottom:2px; }
+
+/* modal */
+.modal-backdrop{
+  position:fixed; inset:0; background: rgba(28,47,38,0.45);
+  display:none; align-items:center; justify-content:center; z-index:100;
+  padding: 20px;
+  backdrop-filter: blur(2px);
+}
+.modal-backdrop.active{ display:flex; }
+.modal{
+  background: var(--paper-raised);
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  max-width: 560px; width:100%;
+  max-height: 86vh;
+  overflow-y:auto;
+  padding: 24px;
+  box-shadow: 0 20px 60px -20px rgba(0,0,0,0.5);
+  animation: pop .2s ease;
+}
+@keyframes pop{ from{ opacity:0; transform: scale(.96) translateY(6px);} to{opacity:1; transform:none;} }
+.modal-head{ display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 16px; }
+
+.divider{ height:1px; background: var(--line); margin: 18px 0; border:none; }
+.flex{ display:flex; }
+.between{ justify-content:space-between; }
+.center{ align-items:center; }
+.gap8{ gap:8px; } .gap12{gap:12px;} .gap16{gap:16px;}
+.wrap{ flex-wrap:wrap; }
+.muted{ color: var(--ink-soft); }
+.right{ text-align:right; }
+
+.toast{
+  position: fixed; bottom: 22px; left:50%; transform: translateX(-50%) translateY(20px);
+  background: var(--forest-dark); color: var(--paper-raised);
+  padding: 10px 20px; border-radius: 30px;
+  font-family:'IBM Plex Mono', monospace; font-size:12.5px;
+  opacity:0; pointer-events:none; transition: all .25s ease;
+  z-index: 200; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  display:flex; align-items:center; gap:8px;
+}
+.toast.show{ opacity:1; transform: translateX(-50%) translateY(0); }
+
+.date-picker-row{ display:flex; align-items:center; gap:10px; margin-bottom:18px; }
+.date-picker-row input[type=date]{ width:auto; }
+
+.chart-box{ position:relative; height: 320px; }
+.chart-box.small{ height:220px; }
+
+.combo-chip{
+  display:inline-flex; align-items:center; gap:6px;
+  background: var(--paper-dark); border-radius:20px; padding:4px 10px 4px 4px;
+  font-size:12px; margin: 3px 4px 3px 0;
+}
+.combo-chip .x{ cursor:pointer; color:var(--danger); font-weight:700; padding:0 4px;}
+
+.gallery-month{ margin-bottom: 26px; }
+.gallery-month h4{ font-size:15px; margin-bottom:10px; }
+.gallery-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap:12px; }
+.gallery-item{ position:relative; border-radius:8px; overflow:hidden; border:1px solid var(--line); }
+.gallery-item img{ width:100%; height:150px; object-fit:cover; display:block; }
+.gallery-item .cap{
+  position:absolute; bottom:0; left:0; right:0;
+  background: linear-gradient(transparent, rgba(28,47,38,0.85));
+  color:#fff; font-family:'IBM Plex Mono',monospace; font-size:10.5px;
+  padding: 16px 8px 6px 8px;
+}
+.gallery-item .del{
+  position:absolute; top:5px; right:5px; width:22px;height:22px;border-radius:50%;
+  background:rgba(28,47,38,0.7); color:#fff; border:none; display:flex;align-items:center;justify-content:center;
+  font-size:13px; cursor:pointer;
+}
+
+footer{
+  text-align:center; padding: 30px 6vw 50px; color: var(--ink-soft);
+  font-family:'IBM Plex Mono',monospace; font-size:11px; letter-spacing:.05em;
+}
+
+.over-note{ margin-top:14px; padding:10px 14px; border-radius:8px; font-size:12.5px; line-height:1.5; }
+.over-note.ok{ background: var(--forest-tint); color: var(--forest); border:1px solid rgba(63,107,74,0.25); }
+.over-note.warn{ background: var(--terracotta-tint); color: var(--terracotta-dark); border:1px solid rgba(193,98,45,0.3); }
+
+.assumption-line{
+  display:flex; justify-content:space-between; padding:9px 0;
+  border-bottom: 1px dashed var(--line); font-size:13px;
+}
+.assumption-line:last-child{ border-bottom:none; }
+.assumption-line b.mono{ color: var(--forest-dark); }
+
+.projection-banner{
+  background: var(--forest-dark); color: var(--paper-raised);
+  border-radius: 10px; padding: 20px 24px;
+  display:flex; align-items:center; justify-content:space-between; gap:20px;
+  flex-wrap:wrap;
+  margin-bottom: 20px;
+  background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 14px);
+}
+.projection-banner .big{ font-family:'Fraunces',serif; font-style:italic; font-size:32px; }
+.projection-banner .lbl{ font-family:'IBM Plex Mono',monospace; font-size:11px; text-transform:uppercase; letter-spacing:.1em; color: var(--gold); margin-bottom:4px;}
+
+@media (max-width:640px){
+  .app-header{ padding: 20px 4vw 0; }
+  .tab-strip{ margin: 18px 4vw 0; }
+  main{ padding: 22px 4vw 70px; }
+  .brand-title{ font-size:22px; }
+}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--forest-dark)" stroke-width="1.6"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" stroke-linecap="round"/><circle cx="12" cy="12" r="3.4"/></svg>
+    </div>
+    <div>
+      <div class="brand-title">Field Log</div>
+      <div class="brand-sub">Weight &amp; Composition Journal</div>
+    </div>
+  </div>
+  <div class="header-date">
+    <span id="headerDate"></span>
+    <strong id="headerWeight">— kg · —% bf</strong>
+  </div>
+</header>
+
+<nav class="tab-strip" id="tabStrip">
+  <button class="tab-btn active" data-tab="profile"><span class="tnum">01</span> Profile &amp; Stats</button>
+  <button class="tab-btn" data-tab="goals"><span class="tnum">02</span> Goals &amp; Assumptions</button>
+  <button class="tab-btn" data-tab="tracker"><span class="tnum">03</span> Calorie Tracker</button>
+  <button class="tab-btn" data-tab="workouts"><span class="tnum">04</span> Workouts</button>
+  <button class="tab-btn" data-tab="foods"><span class="tnum">05</span> Food Database</button>
+  <button class="tab-btn" data-tab="progress"><span class="tnum">06</span> Progress</button>
+</nav>
+
+<main>
+
+  <!-- ============ TAB 1: PROFILE & STATS ============ -->
+  <section class="panel active" id="panel-profile">
+    <div class="section-title">
+      <h2>Profile &amp; Stats</h2>
+      <span>who you are, right now</span>
+    </div>
+
+    <div class="grid grid-4" style="margin-bottom:20px;">
+      <div class="card card-tight">
+        <div class="card-title">Current Weight</div>
+        <div class="stat-value" id="statWeight">—<small>kg</small></div>
+        <div class="stat-delta flat" id="statWeightDelta">no data yet</div>
+      </div>
+      <div class="card card-tight">
+        <div class="card-title">Body Fat</div>
+        <div class="stat-value" id="statBF">—<small>%</small></div>
+        <div class="stat-delta flat" id="statBFDelta">no data yet</div>
+      </div>
+      <div class="card card-tight">
+        <div class="card-title">Lean Mass (est.)</div>
+        <div class="stat-value" id="statLean">—<small>kg</small></div>
+        <div class="stat-delta flat" id="statLeanDelta">assumes constant</div>
+      </div>
+      <div class="card card-tight">
+        <div class="card-title">BMI</div>
+        <div class="stat-value" id="statBMI">—<small></small></div>
+        <div class="stat-delta flat" id="statBMICat">—</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 9h18"/></svg>
+          Log Entry Table
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Date</th><th>Weight</th><th>BF%</th><th>Source</th><th></th></tr></thead>
+            <tbody id="bodyLogTable"></tbody>
+          </table>
+        </div>
+        <button class="btn terracotta" style="margin-top:14px;" id="openBodyLogModal">+ Add Measurement</button>
+      </div>
+
+      <div>
+        <div class="card" style="margin-bottom:18px;">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>
+            About You
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Name</label>
+              <input type="text" id="pName" placeholder="Antoun">
+            </div>
+            <div class="field">
+              <label>Sex</label>
+              <select id="pSex"><option value="male">Male</option><option value="female">Female</option></select>
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label>Age (yrs)</label>
+              <input type="number" id="pAge" placeholder="30">
+            </div>
+            <div class="field">
+              <label>Height (cm)</label>
+              <input type="number" id="pHeight" placeholder="178">
+            </div>
+          </div>
+          <div class="field">
+            <label>Baseline Activity (non-exercise)</label>
+            <select id="pActivity">
+              <option value="1.2">Sedentary — desk job, little movement</option>
+              <option value="1.375">Light — some walking</option>
+              <option value="1.55">Moderate — on feet often</option>
+              <option value="1.725">Active — physical job</option>
+              <option value="1.9">Very Active</option>
+            </select>
+          </div>
+          <button class="btn block" id="saveProfileBtn">Save Profile</button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5-9 9"/></svg>
+            App Screenshots &amp; Photo Upload
+          </div>
+          <p class="hint" style="margin:0 0 12px;">Upload a screenshot from Renpho / Apple Health / Fitness — attach it to a measurement, or drop it here just to keep on file.</p>
+          <label class="dropzone" for="quickPhotoInput">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+            <div>Click to upload a screenshot</div>
+            <input type="file" id="quickPhotoInput" accept="image/*">
+          </label>
+          <div class="thumb-row" id="quickThumbRow"></div>
+
+          <div class="divider"></div>
+          <div class="connect-row">
+            <div class="connect-card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="2" width="16" height="20" rx="3"/><circle cx="12" cy="17" r="1"/></svg>
+              <div class="name">Renpho</div>
+              <span class="tag soon">API coming soon</span>
+            </div>
+            <div class="connect-card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 21s-7-4.6-9.5-9A5.5 5.5 0 0112 6.5 5.5 5.5 0 0121.5 12c-2.5 4.4-9.5 9-9.5 9z"/></svg>
+              <div class="name">Apple Health</div>
+              <span class="tag soon">API coming soon</span>
+            </div>
+            <div class="connect-card">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
+              <div class="name">Apple Fitness</div>
+              <span class="tag soon">API coming soon</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 2: GOALS & ASSUMPTIONS ============ -->
+  <section class="panel" id="panel-goals">
+    <div class="section-title">
+      <h2>Goals &amp; Assumptions</h2>
+      <span>just the targets — the math lives in Calorie Tracker &amp; Progress, using real logged data</span>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>
+        Target
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Target Body Fat %</label>
+          <input type="number" step="0.1" id="gTargetBF" placeholder="15">
+        </div>
+        <div class="field">
+          <label>Target Weight (kg) <span style="text-transform:none;">— drives your plan</span></label>
+          <input type="number" step="0.1" id="gTargetWeight" placeholder="77">
+        </div>
+      </div>
+      <button type="button" class="btn ghost small" id="suggestTargetBtn" style="margin-top:-6px; margin-bottom:10px;">Suggest Target Weight from today's lean mass + this %</button>
+      <p class="hint" style="margin-top:-4px;">Target Weight drives your timeline (see Progress) — use a number you've actually hit before if you have one (most reliable, e.g. from a past scan). Target Body Fat % is just an expectation label. These two are independent and only saved as typed.</p>
+      <div class="field-row">
+        <div class="field">
+          <label>Weekly Calorie Deficit (kcal)</label>
+          <input type="number" step="50" id="gWeeklyDeficit" placeholder="3500">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Workouts / Week</label>
+          <input type="number" id="gWorkouts" placeholder="4">
+        </div>
+        <div class="field">
+          <label>Avg. Calories Burned / Workout</label>
+          <input type="number" step="10" id="gCalPerWorkout" placeholder="400">
+        </div>
+      </div>
+      <button class="btn block" id="saveGoalsBtn">Save Goals</button>
+      <p class="hint" style="margin-top:10px;">"Workouts/Week" and "Avg. Calories/Workout" here are only a fallback — once you log real workouts in the Workouts tab, the actual data is used everywhere instead. Your day-by-day burn, deficit, and projected weight change are tracked in the Calorie Tracker tab; your timeline and milestones are in Progress.</p>
+    </div>
+  </section>
+
+  <!-- ============ TAB 3: CALORIE TRACKER ============ -->
+  <section class="panel" id="panel-tracker">
+    <div class="section-title">
+      <h2>Calorie Tracker</h2>
+      <span>today's ledger</span>
+    </div>
+
+    <div class="period-heading"><span class="tnum">Day</span></div>
+
+    <div class="date-picker-row">
+      <button class="icon-btn" id="trackerPrevDay">&larr;</button>
+      <input type="date" id="trackerDate">
+      <button class="icon-btn" id="trackerNextDay">&rarr;</button>
+      <button class="btn ghost small" id="trackerToday">Today</button>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3v18M3 12h18"/></svg>
+          Add Food
+        </div>
+        <div class="field">
+          <label>Quick add from database</label>
+          <div class="flex gap8">
+            <select id="quickFoodSelect" style="flex:1;"></select>
+            <input type="number" id="quickFoodQty" value="1" min="0.1" step="0.1" style="width:80px;">
+            <button class="btn secondary" id="quickFoodAdd">Add</button>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="field">
+          <label>...or log a custom item</label>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Name</label><input type="text" id="customName" placeholder="Grilled chicken bowl"></div>
+          <div class="field"><label>Calories</label><input type="number" id="customCal" placeholder="520"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Protein (g)</label><input type="number" id="customP" placeholder="40"></div>
+          <div class="field"><label>Carbs (g)</label><input type="number" id="customC" placeholder="55"></div>
+          <div class="field"><label>Fat (g)</label><input type="number" id="customF" placeholder="15"></div>
+        </div>
+        <button class="btn terracotta block" id="customFoodAdd">Log Custom Item</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+          Remaining Today
+        </div>
+        <div class="ring-wrap">
+          <div class="ring">
+            <svg viewBox="0 0 150 150">
+              <circle cx="75" cy="75" r="62" stroke="var(--paper-dark)" stroke-width="14" fill="none"/>
+              <circle cx="75" cy="75" r="62" stroke="var(--forest)" stroke-width="14" fill="none" stroke-linecap="round" id="kcalRing" stroke-dasharray="390" stroke-dashoffset="390"/>
+            </svg>
+            <div class="ring-center">
+              <div class="big" id="kcalRemainingText">—</div>
+              <div class="small">kcal left</div>
+            </div>
+          </div>
+          <div style="flex:1; min-width:180px;">
+            <div class="assumption-line"><span>This day's workout (actual)</span><b class="mono" id="trkWorkoutCal">—</b></div>
+            <div class="assumption-line"><span>Budget</span><b class="mono" id="trkBudget">—</b></div>
+            <div class="assumption-line"><span>Consumed</span><b class="mono" id="trkConsumed">—</b></div>
+            <div class="assumption-line"><span>Remaining</span><b class="mono" id="trkRemaining">—</b></div>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:8px;">Budget here uses TDEE + this specific day's actually-logged workout calories (not the average) — log a workout in the Workouts tab for this date to see it reflected here.</p>
+        <div class="divider"></div>
+        <div class="macro-bar-row">
+          <div class="macro-label"><span>Protein</span><b id="macroPText">0 / 0 g</b></div>
+          <div class="bar-track"><div class="bar-fill protein" id="macroPBar" style="width:0%"></div></div>
+        </div>
+        <div class="macro-bar-row">
+          <div class="macro-label"><span>Carbs</span><b id="macroCText">0 / 0 g</b></div>
+          <div class="bar-track"><div class="bar-fill carbs" id="macroCBar" style="width:0%"></div></div>
+        </div>
+        <div class="macro-bar-row">
+          <div class="macro-label"><span>Fat</span><b id="macroFText">0 / 0 g</b></div>
+          <div class="bar-track"><div class="bar-fill fat" id="macroFBar" style="width:0%"></div></div>
+        </div>
+        <div id="overBudgetNote" class="over-note" style="display:none;"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <div class="card-title">Today's Entries</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Item</th><th class="num">Kcal</th><th class="num">P</th><th class="num">C</th><th class="num">F</th><th></th></tr></thead>
+          <tbody id="dailyLogTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12h4l3-9 4 18 3-9h4"/></svg>
+        Full Breakdown — This Day
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Metric</th><th>Description</th><th class="num">Value</th></tr></thead>
+          <tbody id="breakdownTable"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="period-heading"><span class="tnum">Week</span></div>
+
+    <div class="card">
+      <div class="card-title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 10h18M8 2v4M16 2v4"/></svg>
+        This Week — Actual Tracking (Last 7 Days)
+      </div>
+      <p class="hint" style="margin-top:-6px;">Real logged data only — days with nothing logged show as "not logged" and are excluded from the totals below, rather than being counted as zero calories eaten.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th class="num">TDEE</th><th class="num">Workout</th><th class="num">Total Burned</th><th class="num">Consumed</th><th class="num">Deficit/Surplus</th></tr></thead>
+          <tbody id="weeklyBreakdownTable"></tbody>
+        </table>
+      </div>
+      <div class="divider"></div>
+      <div class="assumption-line"><span>Total burned (logged days only)</span><b class="mono" id="weeklyTotalBurned">—</b></div>
+      <div class="assumption-line"><span>Total consumed (logged days only)</span><b class="mono" id="weeklyTotalConsumed">—</b></div>
+      <div class="assumption-line" style="border-top:1.5px solid var(--line-strong); margin-top:6px; padding-top:12px;">
+        <span><b>Total Deficit / Surplus, This Week</b></span><b class="mono" id="weeklyTotalDeficit" style="font-size:16px;">—</b>
+      </div>
+      <div class="assumption-line" style="margin-top:6px;">
+        <span><b>Actual weight change so far this week</b></span><b class="mono" id="weeklyProjectedKg" style="font-size:16px;">—</b>
+      </div>
+      <div class="projection-banner" style="margin-top:16px; margin-bottom:0;">
+        <div>
+          <div class="lbl">Projected This Week (from today alone)</div>
+          <div class="big" id="breakdownWeeklyProjection" style="font-size:22px;">—</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="lbl">If every day matched today</div>
+          <div class="mono" id="breakdownWeeklyBasis" style="font-size:12px;">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="period-heading"><span class="tnum">Month</span></div>
+
+    <div class="card">
+      <div class="flex between center" style="margin-bottom:14px;">
+        <div class="card-title" style="margin:0;">Monthly Summary</div>
+        <select id="monthSummarySelect" style="width:auto;"></select>
+      </div>
+      <div class="assumption-line"><span>Calendar days elapsed</span><b class="mono" id="msDays">—</b></div>
+      <div class="assumption-line"><span>Total recommended intake</span><b class="mono" id="msRecommended">—</b></div>
+      <div class="assumption-line"><span>Total actually consumed</span><b class="mono" id="msConsumed">—</b></div>
+      <div class="assumption-line" style="border-top:1.5px solid var(--line-strong); margin-top:6px; padding-top:12px;">
+        <span><b>Remaining allowance this month</b></span><b class="mono" id="msRemaining" style="font-size:16px;">—</b>
+      </div>
+      <div class="divider"></div>
+      <div class="assumption-line"><span>Days actually logged</span><b class="mono" id="msLoggedDays">—</b></div>
+      <div class="assumption-line"><span>Total caloric burn over those logged days</span><b class="mono" id="msMaintenance">—</b></div>
+      <div class="assumption-line" style="border-top:1.5px solid var(--line-strong); margin-top:6px; padding-top:12px;">
+        <span><b>Total Deficit / Surplus</b></span><b class="mono" id="msActualDeficit" style="font-size:16px;">—</b>
+      </div>
+      <div class="assumption-line" style="margin-top:6px;">
+        <span><b>Monthly delta (est. actual weight change)</b></span><b class="mono" id="msWeightDelta" style="font-size:16px;">—</b>
+      </div>
+      <p class="hint" style="margin-top:10px;">Total Deficit/Surplus = Total Caloric Burn − Total Consumed. It compares what you really ate to your true maintenance burn (TDEE + exercise), independent of whether you hit your daily budget — that's what actually drives the weight change estimate below it, using ~7,700 kcal ≈ 1 kg.</p>
+    </div>
+  </section>
+
+  <!-- ============ TAB 4: WORKOUTS ============ -->
+  <section class="panel" id="panel-workouts">
+    <div class="section-title">
+      <h2>Workouts</h2>
+      <span>what you actually burned</span>
+    </div>
+
+    <div class="card" style="margin-bottom:18px;">
+      <div class="flex between center" style="margin-bottom:10px;">
+        <div class="card-title" style="margin:0;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0114-5.3M20 15a8 8 0 01-14 5.3"/></svg>
+          Sync from Health
+        </div>
+        <button class="btn secondary small" id="syncHealthBtn">Sync Now</button>
+      </div>
+      <p class="hint" style="margin:0;">Pulls workouts from your Health Auto Export → Google Drive → Apps Script pipeline. Safe to click anytime — already-synced workouts are matched by their unique Health ID and never duplicated.</p>
+      <div id="syncHealthStatus" class="hint" style="margin-top:8px; display:none;"></div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6.5 6.5l11 11M4 9l4-4M20 15l-4 4M2 12l3-3M22 12l-3 3M9 4l-3 3M15 20l3-3"/></svg>
+          Log a Workout
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Date</label><input type="date" id="wDate"></div>
+          <div class="field"><label>Type</label><input type="text" id="wName" placeholder="Upper body, Run, Football..."></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Duration (min)</label><input type="number" id="wDuration" placeholder="45"></div>
+          <div class="field"><label>Calories Burned</label><input type="number" id="wCal" placeholder="330"></div>
+        </div>
+        <div class="field"><label>Note</label><input type="text" id="wNote" placeholder="optional"></div>
+        <button class="btn terracotta block" id="addWorkoutBtn">Log Workout</button>
+        <p class="hint" style="margin-top:10px;">Calories burned is manual for now — Apple Watch / Apple Fitness API integration is planned (see the Profile tab).</p>
+      </div>
+
+      <div class="card">
+        <div class="card-title">This Week vs. Your Plan</div>
+        <div class="assumption-line"><span>Workouts logged (last 7 days)</span><b class="mono" id="wkThisWeekCount">—</b></div>
+        <div class="assumption-line"><span>Planned workouts / week (Goals)</span><b class="mono" id="wkPlannedCount">—</b></div>
+        <div class="assumption-line"><span>Calories burned (last 7 days)</span><b class="mono" id="wkThisWeekCal">—</b></div>
+        <div class="divider"></div>
+        <div class="assumption-line"><span>Avg. calories / workout (all logged)</span><b class="mono" id="wkAvgCal">—</b></div>
+        <div class="assumption-line"><span>Total workouts logged</span><b class="mono" id="wkTotalCount">—</b></div>
+        <div class="assumption-line" style="border-top:1.5px solid var(--line-strong); margin-top:6px; padding-top:12px;">
+          <span><b>Used in your calorie budget</b></span><b class="mono" id="wkUsedInFormula" style="font-size:14px;">—</b>
+        </div>
+        <p class="hint" style="margin-top:10px;">Once you've logged at least one workout, Goals &amp; Assumptions automatically uses this real average instead of the manual guess.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <div class="card-title">Workout Log</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Type</th><th class="num">Duration</th><th class="num">Calories</th><th>Note</th><th></th></tr></thead>
+          <tbody id="workoutLogTable"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 5: FOOD DATABASE ============ -->
+  <section class="panel" id="panel-foods">
+    <div class="section-title">
+      <h2>Food Database</h2>
+      <span>your pantry &amp; go-to combos</span>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">Add a Food</div>
+        <div class="field"><label>Name</label><input type="text" id="foodName" placeholder="Rite Protein (1 scoop)"></div>
+        <div class="field-row">
+          <div class="field"><label>Calories</label><input type="number" id="foodCal" placeholder="120"></div>
+          <div class="field"><label>Protein (g)</label><input type="number" id="foodP" placeholder="24"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Carbs (g)</label><input type="number" id="foodC" placeholder="3"></div>
+          <div class="field"><label>Fat (g)</label><input type="number" id="foodF" placeholder="1.5"></div>
+        </div>
+        <button class="btn terracotta block" id="addFoodBtn">Add to Database</button>
+
+        <div class="divider"></div>
+        <div class="card-title">Build a Combo Meal</div>
+        <p class="hint" style="margin-top:-4px;">e.g. "Usual Protein Shake" = 2× Rite Protein + 1 banana + chia + water</p>
+        <div class="field"><label>Combo Name</label><input type="text" id="comboName" placeholder="Usual Protein Shake"></div>
+        <div class="field flex gap8" style="align-items:flex-end;">
+          <div style="flex:1;"><label>Pick food</label><select id="comboFoodSelect"></select></div>
+          <div style="width:80px;"><label>Qty</label><input type="number" id="comboFoodQty" value="1" step="0.1"></div>
+          <button class="btn secondary" id="comboAddPart">Add</button>
+        </div>
+        <div id="comboPartsChips" style="margin:6px 0 14px;"></div>
+        <button class="btn block" id="saveComboBtn">Save Combo Meal</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Your Foods &amp; Combos</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Item</th><th class="num">Kcal</th><th class="num">P</th><th class="num">C</th><th class="num">F</th><th></th></tr></thead>
+            <tbody id="foodDbTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ TAB 6: PROGRESS ============ -->
+  <section class="panel" id="panel-progress">
+    <div class="section-title">
+      <h2>Progress</h2>
+      <span>the trend line tells the truth</span>
+    </div>
+
+    <div class="projection-banner">
+      <div>
+        <div class="lbl">Projected Completion</div>
+        <div class="big" id="projDateText">Log a couple of measurements to see this</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="lbl">Based on</div>
+        <div id="projBasis" class="mono" style="font-size:13px;">—</div>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="card-title">Weight &amp; Body Fat Over Time</div>
+        <p class="hint" style="margin-top:-6px;">Solid lines are logged history. Dashed lines are the projected path to your target; gold dots mark milestones.</p>
+        <div class="chart-box"><canvas id="progressChart"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Weekly Workouts Needed</div>
+        <p class="hint">At your saved weekly deficit target and average calories burned per workout, here's the workout cadence required to stay on pace.</p>
+        <div class="chart-box small"><canvas id="workoutChart"></canvas></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <div class="card-title">Current</div>
+      <p class="hint" style="margin-top:-6px;">Your logged history to date.</p>
+      <div class="chart-box small"><canvas id="currentCompChart"></canvas></div>
+      <div id="currentCompLabel" class="mono" style="margin-top:10px; font-size:13px; text-align:center;">—</div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <div class="card-title">Target — Projected Path to Goal</div>
+      <p class="hint" style="margin-top:-6px;">Standalone projection from today to your target, with milestones marked.</p>
+      <div class="chart-box" style="height:400px;"><canvas id="targetCompChart"></canvas></div>
+      <div id="targetCompLabel" class="mono" style="margin-top:10px; font-size:14px; text-align:center;">—</div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <div class="card-title">Milestones</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Milestone</th><th class="num">Weight</th><th class="num">Est. Body Fat %</th><th class="num">Expected Date</th></tr></thead>
+          <tbody id="milestoneTable"><tr class="empty-row"><td colspan="4">Set a target weight in Goals to see milestones.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;">
+      <div class="flex between center" style="margin-bottom:14px;">
+        <div class="card-title" style="margin:0;">Monthly Progress Photos</div>
+        <label class="btn small secondary" for="progressPhotoInput">+ Upload Photo</label>
+        <input type="file" id="progressPhotoInput" accept="image/*" style="display:none;">
+      </div>
+      <div id="photoGallery"></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>FIELD LOG — kept privately in your browser · no data leaves this device</footer>
+
+<!-- Body Log Modal -->
+<div class="modal-backdrop" id="bodyLogModalBackdrop">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>New Measurement</h3>
+      <button class="icon-btn" id="closeBodyLogModal">✕</button>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Date</label><input type="date" id="blDate"></div>
+      <div class="field"><label>Source</label>
+        <select id="blSource">
+          <option value="manual">Manual</option>
+          <option value="renpho">Renpho screenshot</option>
+          <option value="health">Apple Health screenshot</option>
+          <option value="fitness">Apple Fitness screenshot</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Weight (kg)</label><input type="number" step="0.1" id="blWeight" placeholder="82.4"></div>
+      <div class="field"><label>Body Fat %</label><input type="number" step="0.1" id="blBF" placeholder="24.2"></div>
+    </div>
+    <div class="field"><label>Note</label><input type="text" id="blNote" placeholder="optional"></div>
+    <div class="field">
+      <label>Attach screenshot (optional)</label>
+      <label class="dropzone" for="blPhotoInput" style="padding:14px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="width:20px;height:20px;margin:0;"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 002 2h12a2 2 0 002-2v-3"/></svg>
+        <span id="blPhotoLabel" style="margin-left:6px;">Click to attach</span>
+        <input type="file" id="blPhotoInput" accept="image/*">
+      </label>
+    </div>
+    <button class="btn terracotta block" id="saveBodyLogBtn">Save Measurement</button>
+  </div>
+</div>
+
+<div class="toast" id="toast">Saved.</div>
+
+<script>
+/* ============================================================
+   STORAGE
+============================================================ */
+const STORE_KEY = 'fieldlog_v1';
+const defaultState = {
+  profile: { name:'Antoun', sex:'male', age:34.5, heightCm:179, activity:1.2 },
+  bodyLogs: [
+    { id:'seed1', date:'2025-02-08', weight:77.05, bf:14.8, source:'renpho', note:'Historical scan', photo:null },
+    { id:'seed2', date:'2025-08-15', weight:81.45, bf:15.9, source:'renpho', note:'Historical scan (date approximate)', photo:null },
+    { id:'seed3', date:'2025-11-01', weight:83.15, bf:16.3, source:'renpho', note:'Historical scan', photo:null },
+    { id:'seed4', date:'2026-02-16', weight:86.55, bf:17.0, source:'renpho', note:'Historical scan', photo:null },
+    { id:'seed5', date:'2026-07-21', weight:89, bf:17.5, source:'manual', note:'Weight from scale; BF% estimated from historical trend (a Renpho scan the same week read 27.8%, but that broke a year-long consistent lean-mass trend and is treated as bad data). Confirm with a fresh clean scan when possible.', photo:null },
+  ],
+  goals: { targetBF:14.8, targetWeight:77, weeklyDeficit:3850, workouts:4, calPerWorkout:330 },
+  foods: [
+    { id:'f1', name:'Rite Protein (1 scoop)', cal:120, p:24, c:3, f:1.5 },
+    { id:'f2', name:'Banana (80g)', cal:71, p:0.9, c:18, f:0.3 },
+    { id:'f3', name:'Chia Seeds (5g)', cal:24, p:0.8, c:2.1, f:1.5 },
+    { id:'f4', name:'Water', cal:0, p:0, c:0, f:0 },
+    { id:'f5', name:'Whole Egg (1 large)', cal:72, p:6.3, c:0.4, f:4.8 },
+    { id:'f6', name:'Chicken Breast (100g cooked)', cal:165, p:31, c:0, f:3.6 },
+    { id:'f7', name:'White Rice (1 cup cooked)', cal:205, p:4.3, c:45, f:0.4 },
+    { id:'f8', name:'Cottage Cheese (half tub)', cal:110, p:15, c:9, f:0 },
+    { id:'f9', name:'Strawberry Whey Protein Yogurt (150g pot)', cal:94.5, p:15, c:7.5, f:0.3 },
+  ],
+  combos: [
+    { id:'combo1', name:'Usual Protein Shake (2 scoops Rite protein, banana, 10g chia, 10g flax)', cal:336, p:28, c:34, f:7, parts:[] },
+  ],
+  dailyLogs: {
+    '2026-07-19': [
+      { id:'d1a', name:'Morning Shake — 2 scoops Rite protein, banana, 10g chia, 10g flax', cal:336, p:28, c:34, f:7 },
+      { id:'d1b', name:'Lunch — Grilled chicken breast, mixed greens, olive oil & lemon dressing', cal:480, p:45, c:18, f:16 },
+      { id:'d1c', name:'Snack — Greek yogurt (150g) with berries', cal:140, p:15, c:16, f:2 },
+      { id:'d1d', name:'Dinner — Turkish Köfte (lean minced beef), grilled vegetables, side salad', cal:830, p:65, c:51, f:35 },
+      { id:'d1e', name:'Late Snack — Cottage cheese (half tub, cinnamon)', cal:110, p:15, c:9, f:0 },
+    ],
+    '2026-07-20': [
+      { id:'d2a', name:'Morning Shake — 2 scoops Rite protein, banana, 10g chia, 10g flax', cal:336, p:28, c:34, f:7 },
+      { id:'d2b', name:'Lunch — Leto Caesar (chicken, 2 eggs, bacon, romaine, dressing)', cal:550, p:52, c:6, f:34 },
+      { id:'d2c', name:'Snack — Cottage cheese (half tub, maple, cinnamon)', cal:110, p:15, c:9, f:0 },
+      { id:'d2d', name:'Drink & Nuts — Green juice (celery, lemon, cucumber) + 5 pecans', cal:120, p:2, c:7, f:9 },
+      { id:'d2e', name:'Dinner — 350g raw salmon, baked potato wedges, green salad, peach', cal:936, p:74, c:42, f:48.5 },
+      { id:'d2f', name:'Late Snack — YoPRO Chocolate Pot (130g)', cal:103, p:13, c:12, f:0.4 },
+    ],
+    '2026-07-21': [
+      { id:'d3a', name:'Breakfast — Toast, peanut butter, banana, cinnamon', cal:320, p:10, c:46, f:11.8 },
+      { id:'d3b', name:'Snack — KIND Bar', cal:211, p:7.6, c:13, f:14 },
+      { id:'d3c', name:'Snack — 2 Brazil Nuts', cal:66, p:1.5, c:1, f:6.5 },
+      { id:'d3d', name:'Snack — 1 Small Dried Apricot', cal:20, p:0.3, c:5, f:0 },
+      { id:'d3e', name:'Late Breakfast/Brunch — Brunch meal', cal:645, p:45, c:26, f:39.7 },
+      { id:'d3f', name:'Dinner — Grilled Chicken (250g raw), Rice Pilaf, Potatoes, Veggies', cal:793, p:86, c:67, f:18.8 },
+      { id:'d3g', name:'Leftover — 100g Day 1 Turkish Köfte & Veggies', cal:138, p:10.8, c:8.5, f:5.8 },
+      { id:'d3h', name:'Snack — Strawberry Whey Protein Yogurt (150g pot)', cal:94.5, p:15, c:7.5, f:0.3 },
+    ],
+  },
+  workoutLogs: [
+    { id:'w1', date:'2026-07-19', name:'Workout', durationMin:null, calBurned:300, note:'From nutrition log Day 1 (pre-dates Health sync)' },
+    { id:'w2', date:'2026-07-20', name:'Indoor Walk', durationMin:57, calBurned:360.3, note:'Synced from Health Auto Export (avg HR 115bpm, total 467.7kcal)', sourceId:'8DF4E31F-2839-4C39-B568-2E1657FAF732' },
+    { id:'w3', date:'2026-07-21', name:'Functional Strength Training', durationMin:68, calBurned:442.2, note:'Synced from Health Auto Export (avg HR 116bpm, total 568.2kcal)', sourceId:'7874EF1B-B2E9-4476-B1FD-77161C88B948' },
+    { id:'w4', date:'2026-07-21', name:'Cool down', durationMin:10, calBurned:39.8, note:'Synced from Health Auto Export (avg HR 77bpm, total 60.1kcal)', sourceId:'7DEB8108-FF24-4199-A0CA-4F6A9B50CA9A' },
+  ],
+  quickPhotos: [],
+  progressPhotos: [],
+};
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(!raw) return structuredClone(defaultState);
+    const parsed = JSON.parse(raw);
+    return Object.assign(structuredClone(defaultState), parsed, {
+      profile: Object.assign(structuredClone(defaultState.profile), parsed.profile||{}),
+      goals: Object.assign(structuredClone(defaultState.goals), parsed.goals||{}),
+    });
+  }catch(e){ console.error('load failed', e); return structuredClone(defaultState); }
+}
+function saveState(){ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+
+let state = loadState();
+
+/* ============================================================
+   UTIL
+============================================================ */
+function uid(){ return Math.random().toString(36).slice(2,10); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function fmtDate(iso){
+  const d = new Date(iso+'T00:00:00');
+  return d.toLocaleDateString(undefined,{ month:'short', day:'numeric', year:'numeric' });
+}
+function round1(n){ return Math.round(n*10)/10; }
+function epochDay(dateStr){
+  const [y,m,d] = dateStr.split('-').map(Number);
+  return Math.floor(Date.UTC(y, m-1, d)/86400000);
+}
+function dayToLabel(dayNum){
+  return new Date(dayNum*86400000).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric',timeZone:'UTC'});
+}
+function dayToISO(dayNum){
+  return new Date(dayNum*86400000).toISOString().slice(0,10);
+}
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toast._h);
+  toast._h = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function fileToDataUrl(file){
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = ()=>res(r.result);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+function sortedBodyLogs(){
+  return [...state.bodyLogs].sort((a,b)=> a.date.localeCompare(b.date));
+}
+function latestBodyLog(){
+  const s = sortedBodyLogs();
+  return s.length ? s[s.length-1] : null;
+}
+
+/* ============================================================
+   TABS
+============================================================ */
+document.getElementById('tabStrip').addEventListener('click', (e)=>{
+  const btn = e.target.closest('.tab-btn');
+  if(!btn) return;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+  if(btn.dataset.tab === 'progress') renderProgressTab();
+});
+
+/* ============================================================
+   HEADER
+============================================================ */
+function renderHeader(){
+  document.getElementById('headerDate').textContent = new Date().toLocaleDateString(undefined,{ weekday:'long', month:'long', day:'numeric', year:'numeric' });
+  const last = latestBodyLog();
+  document.getElementById('headerWeight').textContent = last
+    ? `${last.weight} kg · ${last.bf}% bf`
+    : '— kg · —% bf';
+}
+
+/* ============================================================
+   PROFILE TAB
+============================================================ */
+function loadProfileForm(){
+  document.getElementById('pName').value = state.profile.name || '';
+  document.getElementById('pSex').value = state.profile.sex || 'male';
+  document.getElementById('pAge').value = state.profile.age || '';
+  document.getElementById('pHeight').value = state.profile.heightCm || '';
+  document.getElementById('pActivity').value = state.profile.activity || 1.375;
+}
+document.getElementById('saveProfileBtn').addEventListener('click', ()=>{
+  state.profile = {
+    name: document.getElementById('pName').value.trim(),
+    sex: document.getElementById('pSex').value,
+    age: parseFloat(document.getElementById('pAge').value) || null,
+    heightCm: parseFloat(document.getElementById('pHeight').value) || null,
+    activity: parseFloat(document.getElementById('pActivity').value),
+  };
+  saveState();
+  toast('Profile saved.');
+  renderAll();
+});
+
+function renderBodyLogTable(){
+  const tbody = document.getElementById('bodyLogTable');
+  const rows = sortedBodyLogs().slice().reverse();
+  if(!rows.length){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="5">No measurements logged yet — add your first one.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = rows.map(r=>`
+    <tr>
+      <td>${fmtDate(r.date)}</td>
+      <td class="num">${r.weight} kg</td>
+      <td class="num">${r.bf}%</td>
+      <td><span class="tag">${r.source}</span></td>
+      <td><button class="icon-btn" data-del-bodylog="${r.id}">✕</button></td>
+    </tr>
+  `).join('');
+}
+document.getElementById('bodyLogTable').addEventListener('click', e=>{
+  const btn = e.target.closest('[data-del-bodylog]');
+  if(!btn) return;
+  state.bodyLogs = state.bodyLogs.filter(r=>r.id !== btn.dataset.delBodylog);
+  saveState(); renderAll();
+});
+
+function renderStatCards(){
+  const rows = sortedBodyLogs();
+  const last = rows[rows.length-1];
+  const prev = rows[rows.length-2];
+
+  const wEl = document.getElementById('statWeight');
+  const bfEl = document.getElementById('statBF');
+  const leanEl = document.getElementById('statLean');
+  const bmiEl = document.getElementById('statBMI');
+  const bmiCat = document.getElementById('statBMICat');
+  const wD = document.getElementById('statWeightDelta');
+  const bfD = document.getElementById('statBFDelta');
+  const leanD = document.getElementById('statLeanDelta');
+
+  if(!last){
+    wEl.innerHTML = '—<small>kg</small>'; bfEl.innerHTML='—<small>%</small>';
+    leanEl.innerHTML = '—<small>kg</small>'; bmiEl.innerHTML='—';
+    bmiCat.textContent = '—';
+    return;
+  }
+  wEl.innerHTML = `${last.weight}<small>kg</small>`;
+  bfEl.innerHTML = `${last.bf}<small>%</small>`;
+  const lean = round1(last.weight * (1 - last.bf/100));
+  leanEl.innerHTML = `${lean}<small>kg</small>`;
+  leanD.textContent = 'assumes constant';
+
+  const h = state.profile.heightCm;
+  if(h){
+    const bmi = last.weight / Math.pow(h/100,2);
+    bmiEl.innerHTML = `${round1(bmi)}<small></small>`;
+    let cat = 'Normal';
+    if(bmi<18.5) cat='Underweight'; else if(bmi>=25&&bmi<30) cat='Overweight'; else if(bmi>=30) cat='Obese';
+    bmiCat.textContent = cat;
+  } else {
+    bmiEl.innerHTML = '—'; bmiCat.textContent = 'add height';
+  }
+
+  function setDelta(el, delta, unit, invertGood){
+    if(prev==null || delta==null || isNaN(delta)){ el.textContent='no prior entry'; el.className='stat-delta flat'; return; }
+    const good = invertGood ? delta > 0 : delta < 0;
+    const sign = delta>0?'+':'';
+    el.textContent = `${sign}${round1(delta)}${unit} since last log`;
+    el.className = 'stat-delta ' + (Math.abs(delta) < 0.05 ? 'flat' : (good ? 'down' : 'up'));
+  }
+  setDelta(wD, prev? last.weight-prev.weight : null, 'kg', false);
+  setDelta(bfD, prev? last.bf-prev.bf : null, '%', false);
+}
+
+/* Body log modal */
+const bodyLogBackdrop = document.getElementById('bodyLogModalBackdrop');
+let pendingBLPhoto = null;
+document.getElementById('openBodyLogModal').addEventListener('click', ()=>{
+  document.getElementById('blDate').value = todayISO();
+  document.getElementById('blWeight').value = '';
+  document.getElementById('blBF').value = '';
+  document.getElementById('blNote').value = '';
+  document.getElementById('blSource').value = 'manual';
+  document.getElementById('blPhotoLabel').textContent = 'Click to attach';
+  pendingBLPhoto = null;
+  bodyLogBackdrop.classList.add('active');
+});
+document.getElementById('closeBodyLogModal').addEventListener('click', ()=> bodyLogBackdrop.classList.remove('active'));
+bodyLogBackdrop.addEventListener('click', e=>{ if(e.target===bodyLogBackdrop) bodyLogBackdrop.classList.remove('active'); });
+document.getElementById('blPhotoInput').addEventListener('change', async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  pendingBLPhoto = await fileToDataUrl(f);
+  document.getElementById('blPhotoLabel').textContent = f.name;
+});
+document.getElementById('saveBodyLogBtn').addEventListener('click', ()=>{
+  const weight = parseFloat(document.getElementById('blWeight').value);
+  const bf = parseFloat(document.getElementById('blBF').value);
+  const date = document.getElementById('blDate').value || todayISO();
+  if(!weight || !bf){ toast('Enter weight and body fat %.'); return; }
+  state.bodyLogs.push({
+    id: uid(), date, weight, bf,
+    source: document.getElementById('blSource').value,
+    note: document.getElementById('blNote').value.trim(),
+    photo: pendingBLPhoto,
+  });
+  saveState();
+  bodyLogBackdrop.classList.remove('active');
+  toast('Measurement saved.');
+  renderAll();
+});
+
+/* Quick photo dropzone (profile tab, no measurement attached) */
+document.getElementById('quickPhotoInput').addEventListener('change', async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const dataUrl = await fileToDataUrl(f);
+  state.quickPhotos.push({ id: uid(), date: todayISO(), photo: dataUrl });
+  saveState();
+  renderQuickPhotos();
+  toast('Screenshot saved.');
+  e.target.value = '';
+});
+function renderQuickPhotos(){
+  const row = document.getElementById('quickThumbRow');
+  row.innerHTML = state.quickPhotos.slice().reverse().map(p=>`<img class="thumb" src="${p.photo}" title="${p.date}">`).join('');
+}
+
+/* ============================================================
+   GOALS TAB + BMR / TDEE / PROJECTION MATH
+============================================================ */
+function leanMassForGoals(){
+  const last = latestBodyLog();
+  return last ? last.weight * (1 - last.bf/100) : null;
+}
+// Target Weight drives the timeline math; Target Body Fat % is just an expectation label.
+// The two are independent and are ONLY ever changed by the user typing — nothing auto-overwrites
+// either field on keystroke (that used to silently clobber a deliberately-set, evidence-based
+// pairing with a same-lean-mass guess). The button below is an opt-in, one-time suggestion.
+document.getElementById('suggestTargetBtn').addEventListener('click', ()=>{
+  const lean = leanMassForGoals();
+  const bf = parseFloat(document.getElementById('gTargetBF').value);
+  if(lean && bf>0 && bf<100){
+    document.getElementById('gTargetWeight').value = round1(lean/(1-bf/100));
+    toast('Suggested target weight from today\'s lean mass — review before saving.');
+  } else {
+    toast('Enter a Target Body Fat % first.');
+  }
+});
+
+function loadGoalsForm(){
+  document.getElementById('gWeeklyDeficit').value = state.goals.weeklyDeficit ?? '';
+  document.getElementById('gWorkouts').value = state.goals.workouts ?? '';
+  document.getElementById('gCalPerWorkout').value = state.goals.calPerWorkout ?? '';
+  document.getElementById('gTargetBF').value = state.goals.targetBF ?? '';
+  document.getElementById('gTargetWeight').value = state.goals.targetWeight ?? '';
+}
+document.getElementById('saveGoalsBtn').addEventListener('click', ()=>{
+  state.goals = {
+    targetBF: parseFloat(document.getElementById('gTargetBF').value) || null,
+    targetWeight: parseFloat(document.getElementById('gTargetWeight').value) || null,
+    weeklyDeficit: parseFloat(document.getElementById('gWeeklyDeficit').value) || 0,
+    workouts: parseFloat(document.getElementById('gWorkouts').value) || 0,
+    calPerWorkout: parseFloat(document.getElementById('gCalPerWorkout').value) || 0,
+  };
+  saveState();
+  toast('Goals saved.');
+  renderAll();
+});
+
+function computeBMR(){
+  // Katch-McArdle: uses measured lean mass (from weight + body-fat %) rather than
+  // population-average build assumptions — more accurate once real body-comp data exists.
+  const last = latestBodyLog();
+  if(!last) return null;
+  const leanMass = last.weight * (1 - last.bf/100);
+  return 370 + 21.6*leanMass;
+}
+function computeTDEE(){
+  const bmr = computeBMR();
+  if(bmr==null) return null;
+  return bmr * (state.profile.activity || 1.2);
+}
+// Prefers your real logged workout average over the manual Goals assumption the moment
+// you've logged at least one workout — that's the "add the workout into the formula" wiring.
+function getEffectiveCalPerWorkout(){
+  const logs = state.workoutLogs || [];
+  if(logs.length){
+    return logs.reduce((s,w)=>s+w.calBurned, 0) / logs.length;
+  }
+  return state.goals.calPerWorkout || 0;
+}
+function getExerciseDailyAvg(){
+  return (state.goals.workouts * getEffectiveCalPerWorkout()) / 7;
+}
+function computeDailyBudget(){
+  const tdee = computeTDEE();
+  if(tdee==null) return null;
+  const exerciseDaily = getExerciseDailyAvg();
+  const deficitDaily = (state.goals.weeklyDeficit || 0) / 7;
+  return tdee + exerciseDaily - deficitDaily;
+}
+// Day-specific version used by the Tracker: swaps the averaged exercise assumption for
+// whatever was actually logged on that exact date (0 if nothing logged that day) — tracking
+// what happened should use real data, not a multi-day average.
+function getWorkoutCaloriesForDate(dateStr){
+  return (state.workoutLogs||[]).filter(w=>w.date===dateStr).reduce((s,w)=>s+w.calBurned, 0);
+}
+function computeDayBudget(dateStr){
+  const tdee = computeTDEE();
+  if(tdee==null) return null;
+  const deficitDaily = (state.goals.weeklyDeficit || 0) / 7;
+  return tdee + getWorkoutCaloriesForDate(dateStr) - deficitDaily;
+}
+function computeProjection(){
+  // Driven by Target Weight directly (a real, measurable number — ideally one you've
+  // actually hit before) rather than assuming today's lean mass never changes during the cut.
+  const last = latestBodyLog();
+  const targetWeight = state.goals.targetWeight;
+  if(!last || !targetWeight) return null;
+  const weightToLose = last.weight - targetWeight;
+  if(weightToLose <= 0) return { alreadyThere:true };
+  const weeklyDeficit = state.goals.weeklyDeficit || 0;
+  if(weeklyDeficit <= 0) return null;
+  const weeks = (weightToLose * 7700) / weeklyDeficit;
+  const targetDate = new Date();
+  targetDate.setDate(targetDate.getDate() + Math.round(weeks*7));
+  return { targetWeight, weightToLose, weeks, targetDate };
+}
+
+function renderGoalsTab(){
+  // Goals tab is targets-only now — no derived BMR/TDEE/budget display here.
+  // That math lives in the Calorie Tracker tab (real, day-by-day actual data) and the
+  // Progress tab (target timeline, milestones). See computeBMR/computeTDEE/computeProjection.
+}
+
+/* ============================================================
+   WORKOUTS TAB
+============================================================ */
+const HEALTH_SYNC_URL = 'https://script.google.com/macros/s/AKfycbxMjE1YgPbFaaKgidLVjRovs6rcoP1E0Hwc6GieW7lduLjYQ72B4n5igHShcd_dvjAe/exec';
+
+document.getElementById('syncHealthBtn').addEventListener('click', async ()=>{
+  const btn = document.getElementById('syncHealthBtn');
+  const status = document.getElementById('syncHealthStatus');
+  btn.disabled = true;
+  btn.textContent = 'Syncing…';
+  status.style.display = 'block';
+  status.textContent = 'Fetching from Health Auto Export…';
+  try{
+    const res = await fetch(HEALTH_SYNC_URL);
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const data = await res.json();
+    const incoming = data.workouts || [];
+    let added = 0, matched = 0;
+    incoming.forEach(w=>{
+      if(!w.date || w.calBurned==null) return;
+      // Already synced (same Health record)? Skip entirely.
+      if(w.id && state.workoutLogs.some(e=>e.sourceId===w.id)) return;
+      // A manually-entered workout on the same day with no sourceId yet? Upgrade it
+      // with the real synced numbers instead of creating a duplicate.
+      const manualMatch = state.workoutLogs.find(e=>!e.sourceId && e.date===w.date);
+      if(manualMatch){
+        manualMatch.name = w.name || manualMatch.name;
+        manualMatch.calBurned = w.calBurned;
+        manualMatch.durationMin = w.durationMin;
+        manualMatch.sourceId = w.id;
+        manualMatch.note = `Synced from Health Auto Export (avg HR ${w.avgHeartRate||'—'}bpm, total ${w.totalEnergy||'—'}kcal)`;
+        matched++;
+      } else {
+        state.workoutLogs.push({
+          id: uid(), date: w.date, name: w.name || 'Workout',
+          durationMin: w.durationMin, calBurned: w.calBurned,
+          note: `Synced from Health Auto Export (avg HR ${w.avgHeartRate||'—'}bpm, total ${w.totalEnergy||'—'}kcal)`,
+          sourceId: w.id,
+        });
+        added++;
+      }
+    });
+    saveState();
+    renderAll();
+    status.textContent = `Synced ${incoming.length} workout${incoming.length===1?'':'s'} from Health — ${added} new, ${matched} matched to existing entries.`;
+    toast('Health sync complete.');
+  } catch(err){
+    status.textContent = 'Sync failed — check the Apps Script URL is still deployed and reachable.';
+    toast('Sync failed.');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Sync Now';
+  }
+});
+
+document.getElementById('addWorkoutBtn').addEventListener('click', ()=>{
+  const date = document.getElementById('wDate').value || todayISO();
+  const name = document.getElementById('wName').value.trim() || 'Workout';
+  const calBurned = parseFloat(document.getElementById('wCal').value);
+  if(isNaN(calBurned)){ toast('Calories burned is required.'); return; }
+  state.workoutLogs.push({
+    id: uid(), date, name,
+    durationMin: parseFloat(document.getElementById('wDuration').value) || null,
+    calBurned,
+    note: document.getElementById('wNote').value.trim(),
+  });
+  saveState();
+  ['wName','wDuration','wCal','wNote'].forEach(id=>document.getElementById(id).value='');
+  toast('Workout logged.');
+  renderAll();
+});
+document.getElementById('workoutLogTable').addEventListener('click', e=>{
+  const btn = e.target.closest('[data-del-workout]');
+  if(!btn) return;
+  state.workoutLogs = state.workoutLogs.filter(w=>w.id!==btn.dataset.delWorkout);
+  saveState();
+  renderAll();
+});
+
+function renderWorkoutsTab(){
+  if(!document.getElementById('wDate').value) document.getElementById('wDate').value = todayISO();
+
+  const logs = [...state.workoutLogs].sort((a,b)=> b.date.localeCompare(a.date));
+  const tbody = document.getElementById('workoutLogTable');
+  if(!logs.length){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">No workouts logged yet.</td></tr>`;
+  } else {
+    tbody.innerHTML = logs.map(w=>`
+      <tr>
+        <td>${fmtDate(w.date)}</td>
+        <td>${w.name}</td>
+        <td class="num">${w.durationMin!=null ? w.durationMin+' min' : '—'}</td>
+        <td class="num">${Math.round(w.calBurned)}</td>
+        <td>${w.note || ''}</td>
+        <td><button class="icon-btn" data-del-workout="${w.id}">✕</button></td>
+      </tr>
+    `).join('');
+  }
+
+  const todayNum = epochDay(todayISO());
+  const last7 = state.workoutLogs.filter(w=> todayNum - epochDay(w.date) >= 0 && todayNum - epochDay(w.date) < 7);
+  const thisWeekCal = last7.reduce((s,w)=>s+w.calBurned, 0);
+  document.getElementById('wkThisWeekCount').textContent = `${last7.length}`;
+  document.getElementById('wkPlannedCount').textContent = `${state.goals.workouts ?? '—'}`;
+  document.getElementById('wkThisWeekCal').textContent = `${Math.round(thisWeekCal)} kcal`;
+
+  document.getElementById('wkTotalCount').textContent = `${state.workoutLogs.length}`;
+  if(state.workoutLogs.length){
+    document.getElementById('wkAvgCal').textContent = `${Math.round(getEffectiveCalPerWorkout())} kcal`;
+    document.getElementById('wkUsedInFormula').textContent = `${Math.round(getEffectiveCalPerWorkout())} kcal/workout (real avg. from ${state.workoutLogs.length} logged)`;
+  } else {
+    document.getElementById('wkAvgCal').textContent = '—';
+    document.getElementById('wkUsedInFormula').textContent = `${state.goals.calPerWorkout || 0} kcal/workout (manual assumption — no workouts logged yet)`;
+  }
+}
+
+/* ============================================================
+   FOOD DATABASE TAB
+============================================================ */
+function allFoodItems(){
+  // unify foods + combos into one selectable list
+  return [
+    ...state.foods.map(f=>({...f, type:'food'})),
+    ...state.combos.map(c=>({...c, type:'combo'})),
+  ];
+}
+document.getElementById('addFoodBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('foodName').value.trim();
+  const cal = parseFloat(document.getElementById('foodCal').value);
+  if(!name || isNaN(cal)){ toast('Name and calories required.'); return; }
+  state.foods.push({
+    id: uid(), name, cal,
+    p: parseFloat(document.getElementById('foodP').value)||0,
+    c: parseFloat(document.getElementById('foodC').value)||0,
+    f: parseFloat(document.getElementById('foodF').value)||0,
+  });
+  saveState();
+  ['foodName','foodCal','foodP','foodC','foodF'].forEach(id=>document.getElementById(id).value='');
+  toast('Added to database.');
+  renderAll();
+});
+
+let comboParts = [];
+document.getElementById('comboAddPart').addEventListener('click', ()=>{
+  const foodId = document.getElementById('comboFoodSelect').value;
+  const qty = parseFloat(document.getElementById('comboFoodQty').value) || 1;
+  const food = state.foods.find(f=>f.id===foodId);
+  if(!food) return;
+  comboParts.push({ foodId, qty, name: food.name });
+  renderComboChips();
+});
+function renderComboChips(){
+  document.getElementById('comboPartsChips').innerHTML = comboParts.map((p,i)=>
+    `<span class="combo-chip">${p.qty}× ${p.name}<span class="x" data-remove-part="${i}">✕</span></span>`
+  ).join('') || '<span class="hint">No parts added yet.</span>';
+}
+document.getElementById('comboPartsChips').addEventListener('click', e=>{
+  const btn = e.target.closest('[data-remove-part]');
+  if(!btn) return;
+  comboParts.splice(parseInt(btn.dataset.removePart),1);
+  renderComboChips();
+});
+document.getElementById('saveComboBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('comboName').value.trim();
+  if(!name || !comboParts.length){ toast('Name your combo and add at least one part.'); return; }
+  const totals = comboParts.reduce((acc,p)=>{
+    const f = state.foods.find(x=>x.id===p.foodId);
+    if(!f) return acc;
+    acc.cal += f.cal*p.qty; acc.p += f.p*p.qty; acc.c += f.c*p.qty; acc.f += f.f*p.qty;
+    return acc;
+  }, {cal:0,p:0,c:0,f:0});
+  state.combos.push({
+    id: uid(), name,
+    cal: round1(totals.cal), p: round1(totals.p), c: round1(totals.c), f: round1(totals.f),
+    parts: comboParts,
+  });
+  saveState();
+  comboParts = [];
+  document.getElementById('comboName').value = '';
+  renderComboChips();
+  toast('Combo meal saved.');
+  renderAll();
+});
+
+function renderFoodDbTable(){
+  const tbody = document.getElementById('foodDbTable');
+  const items = allFoodItems();
+  if(!items.length){ tbody.innerHTML = `<tr class="empty-row"><td colspan="6">No foods yet.</td></tr>`; return; }
+  tbody.innerHTML = items.map(it=>`
+    <tr>
+      <td>${it.name} ${it.type==='combo' ? '<span class="tag combo">combo</span>' : ''}</td>
+      <td class="num">${round1(it.cal)}</td>
+      <td class="num">${round1(it.p)}</td>
+      <td class="num">${round1(it.c)}</td>
+      <td class="num">${round1(it.f)}</td>
+      <td><button class="icon-btn" data-del-item="${it.type}:${it.id}">✕</button></td>
+    </tr>
+  `).join('');
+}
+document.getElementById('foodDbTable').addEventListener('click', e=>{
+  const btn = e.target.closest('[data-del-item]');
+  if(!btn) return;
+  const [type,id] = btn.dataset.delItem.split(':');
+  if(type==='food') state.foods = state.foods.filter(f=>f.id!==id);
+  else state.combos = state.combos.filter(c=>c.id!==id);
+  saveState(); renderAll();
+});
+
+function populateFoodSelects(){
+  const items = allFoodItems();
+  const options = items.map(it=>`<option value="${it.type}:${it.id}">${it.name}${it.type==='combo'?' (combo)':''}</option>`).join('');
+  document.getElementById('quickFoodSelect').innerHTML = options || '<option value="">No foods yet</option>';
+  document.getElementById('comboFoodSelect').innerHTML = state.foods.map(f=>`<option value="${f.id}">${f.name}</option>`).join('') || '<option value="">Add foods first</option>';
+}
+
+/* ============================================================
+   TRACKER TAB
+============================================================ */
+let trackerDate = todayISO();
+document.getElementById('trackerDate').value = trackerDate;
+document.getElementById('trackerDate').addEventListener('change', e=>{ trackerDate = e.target.value; renderTracker(); });
+document.getElementById('trackerPrevDay').addEventListener('click', ()=> shiftTrackerDate(-1));
+document.getElementById('trackerNextDay').addEventListener('click', ()=> shiftTrackerDate(1));
+document.getElementById('trackerToday').addEventListener('click', ()=>{ trackerDate = todayISO(); document.getElementById('trackerDate').value = trackerDate; renderTracker(); });
+function shiftTrackerDate(delta){
+  const d = new Date(trackerDate+'T00:00:00');
+  d.setDate(d.getDate()+delta);
+  trackerDate = d.toISOString().slice(0,10);
+  document.getElementById('trackerDate').value = trackerDate;
+  renderTracker();
+}
+function getDayEntries(date){ return state.dailyLogs[date] || []; }
+
+document.getElementById('quickFoodAdd').addEventListener('click', ()=>{
+  const val = document.getElementById('quickFoodSelect').value;
+  if(!val) return;
+  const [type,id] = val.split(':');
+  const src = type==='combo' ? state.combos.find(c=>c.id===id) : state.foods.find(f=>f.id===id);
+  if(!src) return;
+  const qty = parseFloat(document.getElementById('quickFoodQty').value) || 1;
+  addDayEntry({
+    name: src.name + (qty!==1 ? ` ×${qty}` : ''),
+    cal: round1(src.cal*qty), p: round1(src.p*qty), c: round1(src.c*qty), f: round1(src.f*qty),
+  });
+  document.getElementById('quickFoodQty').value = 1;
+});
+document.getElementById('customFoodAdd').addEventListener('click', ()=>{
+  const name = document.getElementById('customName').value.trim();
+  const cal = parseFloat(document.getElementById('customCal').value);
+  if(!name || isNaN(cal)){ toast('Name and calories required.'); return; }
+  addDayEntry({
+    name, cal,
+    p: parseFloat(document.getElementById('customP').value)||0,
+    c: parseFloat(document.getElementById('customC').value)||0,
+    f: parseFloat(document.getElementById('customF').value)||0,
+  });
+  ['customName','customCal','customP','customC','customF'].forEach(id=>document.getElementById(id).value='');
+});
+function addDayEntry(entry){
+  if(!state.dailyLogs[trackerDate]) state.dailyLogs[trackerDate] = [];
+  state.dailyLogs[trackerDate].push({ id: uid(), ...entry });
+  saveState();
+  renderTracker();
+  toast('Logged.');
+}
+function activityLabel(mult){
+  const map = { 1.2:'Sedentary', 1.375:'Light', 1.55:'Moderate', 1.725:'Active', 1.9:'Very Active' };
+  return map[mult] || 'Custom';
+}
+function hexToRgb(hex){
+  hex = hex.replace('#','');
+  return { r: parseInt(hex.substring(0,2),16), g: parseInt(hex.substring(2,4),16), b: parseInt(hex.substring(4,6),16) };
+}
+function lerpColor(hexA, hexB, t){
+  const a = hexToRgb(hexA), b = hexToRgb(hexB);
+  const r = Math.round(a.r+(b.r-a.r)*t), g = Math.round(a.g+(b.g-a.g)*t), bl = Math.round(a.b+(b.b-a.b)*t);
+  return `rgb(${r},${g},${bl})`;
+}
+// Green the bigger the deficit, amber near breakeven, red for any surplus.
+function deficitColor(deficit){
+  if(deficit < 0) return '#a83232';
+  const dailyTarget = (state.goals.weeklyDeficit||0)/7;
+  const cap = Math.max(dailyTarget*2, 200);
+  const t = Math.max(0, Math.min(1, deficit/cap));
+  return lerpColor('#b8923f', '#3f6b4a', t);
+}
+
+function renderBreakdownTable(dateStr){
+  const bmr = computeBMR();
+  const tbody = document.getElementById('breakdownTable');
+  if(bmr==null){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="3">Log a measurement in Profile &amp; Stats to see this.</td></tr>`;
+    document.getElementById('breakdownWeeklyProjection').textContent = '—';
+    document.getElementById('breakdownWeeklyBasis').textContent = '—';
+    return;
+  }
+  const mult = state.profile.activity || 1.2;
+  const tdee = bmr * mult;
+  const activeFromMultiplier = tdee - bmr;
+  const workoutCal = getWorkoutCaloriesForDate(dateStr);
+  const totalBurn = tdee + workoutCal;
+  const entries = getDayEntries(dateStr);
+  const consumed = entries.reduce((s,e)=>s+e.cal, 0);
+  const deficit = totalBurn - consumed;
+
+  const rows = [
+    ['BMR', 'Calories burned at rest, from your measured lean mass', `${Math.round(bmr)} kcal`],
+    ['Activity Multiplier', `Your baseline daily movement level (${activityLabel(mult)})`, `${mult}`],
+    ['Active (from multiplier)', 'Extra burn from everyday movement, on top of BMR', `+${Math.round(activeFromMultiplier)} kcal`],
+    ['TDEE', 'Baseline total burn: BMR × activity multiplier', `${Math.round(tdee)} kcal`],
+    ['Workout (actual)', 'Calories from this day\'s actual logged workout', workoutCal>0 ? `+${Math.round(workoutCal)} kcal` : 'none logged'],
+    ['Total Burned', 'Everything burned this day: TDEE + workout', `${Math.round(totalBurn)} kcal`],
+    ['Consumed', 'What was actually eaten this day', `${Math.round(consumed)} kcal`],
+  ];
+  tbody.innerHTML = rows.map(([label,desc,val])=>`
+    <tr><td><b>${label}</b></td><td class="hint" style="padding-top:10px;padding-bottom:10px;">${desc}</td><td class="num mono">${val}</td></tr>
+  `).join('') + `
+    <tr style="border-top:1.5px solid var(--line-strong);">
+      <td><b>Deficit / Surplus</b></td>
+      <td class="hint" style="padding-top:10px;padding-bottom:10px;">Burned minus consumed — the real result for this day</td>
+      <td class="num mono" style="font-weight:700; color:${deficitColor(deficit)};">${Math.round(Math.abs(deficit))} kcal ${deficit>=0?'deficit':'surplus'}</td>
+    </tr>
+  `;
+
+  const weeklyKg = (deficit*7)/7700;
+  document.getElementById('breakdownWeeklyProjection').textContent = `${weeklyKg>=0?'−':'+'}${round1(Math.abs(weeklyKg))} kg this week`;
+  document.getElementById('breakdownWeeklyBasis').textContent = `${Math.round(deficit)} kcal/day × 7 ÷ 7,700`;
+}
+
+function renderWeeklyBreakdown(){
+  const tbody = document.getElementById('weeklyBreakdownTable');
+  const bmr = computeBMR();
+  if(bmr==null){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Log a measurement in Profile &amp; Stats to see this.</td></tr>`;
+    ['weeklyTotalBurned','weeklyTotalConsumed','weeklyTotalDeficit','weeklyProjectedKg'].forEach(id=>document.getElementById(id).textContent='—');
+    return;
+  }
+  const mult = state.profile.activity || 1.2;
+  const tdee = bmr * mult;
+  const todayNum = epochDay(todayISO());
+
+  let cumulative = 0, totalBurned = 0, totalConsumed = 0, daysCounted = 0;
+  const rowsHtml = [];
+  for(let i=6; i>=0; i--){
+    const dayNum = todayNum - i;
+    const dateStr = dayToISO(dayNum);
+    const entries = state.dailyLogs[dateStr] || [];
+    const workoutCal = getWorkoutCaloriesForDate(dateStr);
+    const totalBurnDay = tdee + workoutCal;
+    const isToday = dateStr === todayISO();
+    const dateLabel = `${fmtDate(dateStr)}${isToday ? ' <span class="tag">today</span>' : ''}`;
+
+    if(entries.length){
+      const consumed = entries.reduce((s,e)=>s+e.cal, 0);
+      const deficit = totalBurnDay - consumed;
+      cumulative += deficit;
+      totalBurned += totalBurnDay;
+      totalConsumed += consumed;
+      daysCounted++;
+      rowsHtml.push(`
+        <tr>
+          <td>${dateLabel}</td>
+          <td class="num">${Math.round(tdee)}</td>
+          <td class="num">${workoutCal>0 ? '+'+Math.round(workoutCal) : '—'}</td>
+          <td class="num">${Math.round(totalBurnDay)}</td>
+          <td class="num">${Math.round(consumed)}</td>
+          <td class="num" style="font-weight:600; color:${deficitColor(deficit)};">${Math.round(Math.abs(deficit))} ${deficit>=0?'def':'sur'}</td>
+        </tr>
+      `);
+    } else {
+      rowsHtml.push(`
+        <tr style="opacity:.5;">
+          <td>${dateLabel}</td>
+          <td class="num">${Math.round(tdee)}</td>
+          <td class="num">${workoutCal>0 ? '+'+Math.round(workoutCal) : '—'}</td>
+          <td class="num">${Math.round(totalBurnDay)}</td>
+          <td class="num" colspan="1">not logged</td>
+          <td class="num">—</td>
+        </tr>
+      `);
+    }
+  }
+  tbody.innerHTML = rowsHtml.join('');
+
+  if(daysCounted){
+    document.getElementById('weeklyTotalBurned').textContent = `${Math.round(totalBurned)} kcal`;
+    document.getElementById('weeklyTotalConsumed').textContent = `${Math.round(totalConsumed)} kcal`;
+    document.getElementById('weeklyTotalDeficit').textContent = `${Math.round(Math.abs(cumulative))} kcal ${cumulative>=0?'deficit':'surplus'}`;
+    document.getElementById('weeklyProjectedKg').textContent = `${round1(Math.abs(cumulative/7700))} kg ${cumulative>=0?'lost':'gained'} (from ${daysCounted} logged day${daysCounted===1?'':'s'})`;
+  } else {
+    ['weeklyTotalBurned','weeklyTotalConsumed','weeklyTotalDeficit'].forEach(id=>document.getElementById(id).textContent='—');
+    document.getElementById('weeklyProjectedKg').textContent = 'no days logged this week yet';
+  }
+}
+
+function renderTracker(){
+  const entries = getDayEntries(trackerDate);
+  const tbody = document.getElementById('dailyLogTable');
+  if(!entries.length){
+    tbody.innerHTML = `<tr class="empty-row"><td colspan="6">Nothing logged for this day yet.</td></tr>`;
+  } else {
+    tbody.innerHTML = entries.map(en=>`
+      <tr>
+        <td>${en.name}</td>
+        <td class="num">${round1(en.cal)}</td>
+        <td class="num">${round1(en.p)}</td>
+        <td class="num">${round1(en.c)}</td>
+        <td class="num">${round1(en.f)}</td>
+        <td><button class="icon-btn" data-del-entry="${en.id}">✕</button></td>
+      </tr>
+    `).join('');
+  }
+  const totals = entries.reduce((a,e)=>({ cal:a.cal+e.cal, p:a.p+e.p, c:a.c+e.c, f:a.f+e.f }), {cal:0,p:0,c:0,f:0});
+  const budget = computeDayBudget(trackerDate);
+  const remaining = budget!=null ? budget - totals.cal : null;
+  const dayWorkoutCal = getWorkoutCaloriesForDate(trackerDate);
+
+  document.getElementById('trkWorkoutCal').textContent = dayWorkoutCal>0 ? `+${Math.round(dayWorkoutCal)} kcal` : 'none logged';
+  document.getElementById('trkBudget').textContent = budget!=null ? `${Math.round(budget)} kcal` : 'set goals first';
+  document.getElementById('trkConsumed').textContent = `${Math.round(totals.cal)} kcal`;
+  document.getElementById('trkRemaining').textContent = remaining!=null ? `${Math.round(remaining)} kcal` : '—';
+  document.getElementById('kcalRemainingText').textContent = remaining!=null ? Math.round(remaining) : '—';
+
+  const ring = document.getElementById('kcalRing');
+  const circumference = 2*Math.PI*62;
+  ring.setAttribute('stroke-dasharray', circumference);
+  if(budget){
+    const pct = Math.max(0, Math.min(1, totals.cal/budget));
+    ring.setAttribute('stroke-dashoffset', circumference*(1-pct));
+    ring.style.stroke = totals.cal > budget ? 'var(--terracotta)' : 'var(--forest)';
+  } else {
+    ring.setAttribute('stroke-dashoffset', circumference);
+  }
+
+  // macro targets: protein set by bodyweight (2g/kg, standard for preserving lean mass in a cut),
+  // fat at 25% of budget, carbs fill the remainder
+  const last = latestBodyLog();
+  const targetP = last ? 2.0*last.weight : 0;
+  const targetF = budget ? (budget*0.25)/9 : 0;
+  const targetC = budget ? Math.max(0, (budget - targetP*4 - targetF*9))/4 : 0;
+  setMacroBar('P', totals.p, targetP);
+  setMacroBar('C', totals.c, targetC);
+  setMacroBar('F', totals.f, targetF);
+
+  const overNote = document.getElementById('overBudgetNote');
+  if(remaining!=null && remaining < 0){
+    const monthStats = computeMonthStats(trackerDate.slice(0,7));
+    const over = Math.round(Math.abs(remaining));
+    if(monthStats.actualDeficit!=null && monthStats.actualDeficit >= 0){
+      overNote.textContent = `You're ${over} kcal over on ${fmtDate(trackerDate)} — but ${monthStats.daysElapsed===monthStats.totalDaysInMonth ? 'the month' : 'the month so far'} is still running a ${Math.round(monthStats.actualDeficit)} kcal deficit overall. One day over doesn't undo that — no need to stress.`;
+      overNote.className = 'over-note ok';
+    } else if(monthStats.actualDeficit!=null){
+      overNote.textContent = `You're ${over} kcal over on ${fmtDate(trackerDate)}, and the month is currently running a ${Math.round(Math.abs(monthStats.actualDeficit))} kcal surplus overall — worth tightening up over the next few days.`;
+      overNote.className = 'over-note warn';
+    } else {
+      overNote.style.display = 'none';
+    }
+    if(monthStats.actualDeficit!=null) overNote.style.display = 'block';
+  } else {
+    overNote.style.display = 'none';
+  }
+
+  renderBreakdownTable(trackerDate);
+  renderWeeklyBreakdown();
+  populateMonthSummarySelect();
+  renderMonthlySummary();
+}
+
+function populateMonthSummarySelect(){
+  const keys = new Set(Object.keys(state.dailyLogs).map(d=>d.slice(0,7)));
+  keys.add(todayISO().slice(0,7));
+  const sorted = Array.from(keys).sort().reverse();
+  const sel = document.getElementById('monthSummarySelect');
+  const prevVal = sel.value;
+  sel.innerHTML = sorted.map(k=>{
+    const label = new Date(k+'-01T00:00:00').toLocaleDateString(undefined,{month:'long',year:'numeric'});
+    return `<option value="${k}">${label}</option>`;
+  }).join('');
+  sel.value = sorted.includes(prevVal) ? prevVal : todayISO().slice(0,7);
+}
+
+function computeMonthStats(monthKey){
+  const [y, m] = monthKey.split('-').map(Number);
+  const totalDaysInMonth = new Date(y, m, 0).getDate();
+  const isCurrentMonth = monthKey === todayISO().slice(0,7);
+  const daysElapsed = isCurrentMonth ? new Date().getDate() : totalDaysInMonth;
+
+  let consumed = 0;
+  // Only count days that actually have a logged entry — an un-logged day is "unknown",
+  // not "zero calories eaten". Charging full maintenance burn against an unlogged day would
+  // wildly inflate the apparent deficit, so the actual deficit/surplus math below is scoped
+  // to logged days only (recommended/remaining allowance still uses calendar days, since that's
+  // a budget-planning figure, not an "actual" one).
+  // Exercise burn is summed from ACTUAL logged workouts on these same days — not the
+  // multi-day average — so the deficit reflects what really happened, day for day.
+  let loggedDaysCount = 0;
+  let actualWorkoutTotal = 0;
+  Object.keys(state.dailyLogs).forEach(dateStr=>{
+    if(dateStr.slice(0,7) === monthKey){
+      const dayEntries = state.dailyLogs[dateStr] || [];
+      if(dayEntries.length){
+        loggedDaysCount++;
+        consumed += dayEntries.reduce((s,e)=>s+e.cal, 0);
+        actualWorkoutTotal += getWorkoutCaloriesForDate(dateStr);
+      }
+    }
+  });
+
+  const budget = computeDailyBudget();
+  const tdee = computeTDEE();
+  const recommended = budget!=null ? budget * daysElapsed : null;
+  const totalMaintenance = (tdee!=null && loggedDaysCount>0) ? (tdee * loggedDaysCount) + actualWorkoutTotal : null;
+  const actualDeficit = totalMaintenance!=null ? totalMaintenance - consumed : null;
+
+  return { totalDaysInMonth, daysElapsed, loggedDaysCount, consumed, budget, recommended, totalMaintenance, actualDeficit };
+}
+
+function renderMonthlySummary(){
+  const sel = document.getElementById('monthSummarySelect');
+  const monthKey = sel.value || todayISO().slice(0,7);
+  const stats = computeMonthStats(monthKey);
+  const { totalDaysInMonth, daysElapsed, loggedDaysCount, consumed, recommended, totalMaintenance, actualDeficit } = stats;
+
+  document.getElementById('msDays').textContent = `${daysElapsed} / ${totalDaysInMonth}`;
+  document.getElementById('msLoggedDays').textContent = `${loggedDaysCount}`;
+  document.getElementById('msConsumed').textContent = `${Math.round(consumed)} kcal`;
+
+  if(recommended!=null){
+    document.getElementById('msRecommended').textContent = `${Math.round(recommended)} kcal`;
+    document.getElementById('msRemaining').textContent = `${Math.round(recommended - consumed)} kcal`;
+  } else {
+    document.getElementById('msRecommended').textContent = '—';
+    document.getElementById('msRemaining').textContent = '—';
+  }
+
+  if(actualDeficit!=null){
+    const weightDelta = actualDeficit / 7700;
+    document.getElementById('msMaintenance').textContent = `${Math.round(totalMaintenance)} kcal`;
+    document.getElementById('msActualDeficit').textContent = `${Math.round(Math.abs(actualDeficit))} kcal ${actualDeficit>=0?'deficit':'surplus'}`;
+    document.getElementById('msWeightDelta').textContent = `${round1(Math.abs(weightDelta))} kg ${weightDelta>=0?'estimated loss':'estimated gain'}`;
+  } else {
+    document.getElementById('msMaintenance').textContent = 'no days logged yet';
+    document.getElementById('msActualDeficit').textContent = '—';
+    document.getElementById('msWeightDelta').textContent = '—';
+  }
+}
+document.getElementById('monthSummarySelect').addEventListener('change', renderMonthlySummary);
+
+function setMacroBar(letter, val, target){
+  const map = {P:['macroPText','macroPBar'], C:['macroCText','macroCBar'], F:['macroFText','macroFBar']};
+  const [textId, barId] = map[letter];
+  document.getElementById(textId).textContent = `${round1(val)} / ${target? Math.round(target):'—'} g`;
+  document.getElementById(barId).style.width = target ? `${Math.min(100,(val/target)*100)}%` : '0%';
+}
+document.getElementById('dailyLogTable').addEventListener('click', e=>{
+  const btn = e.target.closest('[data-del-entry]');
+  if(!btn) return;
+  state.dailyLogs[trackerDate] = getDayEntries(trackerDate).filter(en=>en.id!==btn.dataset.delEntry);
+  saveState();
+  renderTracker();
+});
+
+/* ============================================================
+   PROGRESS TAB
+============================================================ */
+let progressChartInstance = null;
+let workoutChartInstance = null;
+let currentCompChartInstance = null;
+let targetCompChartInstance = null;
+
+// Builds month-start tick marks (e.g. "Aug", "Sep"...) instead of one tick per data point —
+// much easier to read on a multi-week projection than a repeated full date format.
+function buildMonthlyTicks(axis, startDay, endDay){
+  const startDate = new Date(startDay*86400000);
+  let y = startDate.getUTCFullYear(), m = startDate.getUTCMonth();
+  if(startDate.getUTCDate() !== 1){ m += 1; if(m>11){ m=0; y+=1; } }
+  const ticks = [];
+  for(let i=0; i<12; i++){
+    const day = Math.floor(Date.UTC(y, m, 1)/86400000);
+    if(day > endDay) break;
+    ticks.push({ value: day });
+    m += 1; if(m>11){ m=0; y+=1; }
+  }
+  axis.ticks = ticks;
+}
+function monthTickLabel(v){
+  const d = new Date(v*86400000);
+  const opts = { month:'short', timeZone:'UTC' };
+  if(d.getUTCMonth()===0) opts.year = '2-digit';
+  return d.toLocaleDateString(undefined, opts);
+}
+
+function renderCompositionCharts(rows, projWeight, projBF, milestonePoints){
+  const currentCtx = document.getElementById('currentCompChart');
+  const targetCtx = document.getElementById('targetCompChart');
+  const baseOpts = {
+    responsive:true, maintainAspectRatio:false,
+    interaction:{ mode:'nearest', intersect:false },
+    plugins:{
+      legend:{ labels:{ font:{family:"'IBM Plex Mono', monospace", size:10}, color:'#2b2620' } },
+      tooltip:{ callbacks:{ title: items => items.length ? dayToLabel(items[0].parsed.x) : '' } },
+    },
+    scales:{
+      y:{ position:'left', title:{ display:true, text:'kg', font:{family:"'IBM Plex Mono', monospace",size:10} }, grid:{ color:'rgba(43,38,32,0.08)'} },
+      y1:{ position:'right', title:{ display:true, text:'%', font:{family:"'IBM Plex Mono', monospace",size:10} }, grid:{ display:false } },
+    }
+  };
+
+  if(currentCompChartInstance) currentCompChartInstance.destroy();
+  if(targetCompChartInstance) targetCompChartInstance.destroy();
+
+  if(rows.length){
+    const histWeight = rows.map(r=>({ x: epochDay(r.date), y: r.weight }));
+    const histBF = rows.map(r=>({ x: epochDay(r.date), y: r.bf }));
+    currentCompChartInstance = new Chart(currentCtx, {
+      type:'line',
+      data:{ datasets:[
+        { label:'Weight (kg)', data: histWeight, borderColor:'#2f4a3c', backgroundColor:'rgba(47,74,60,0.12)', yAxisID:'y', tension:.3, fill:true, pointRadius:3, pointBackgroundColor:'#2f4a3c' },
+        { label:'Body Fat (%)', data: histBF, borderColor:'#c1622d', backgroundColor:'rgba(193,98,45,0.1)', yAxisID:'y1', tension:.3, fill:true, pointRadius:3, pointBackgroundColor:'#c1622d' },
+      ]},
+      options: { ...baseOpts, scales:{ ...baseOpts.scales,
+        x:{ type:'linear', ticks:{ font:{family:"'IBM Plex Mono', monospace", size:9}, color:'#5a5347', callback:v=>dayToLabel(v) }, grid:{ color:'rgba(43,38,32,0.08)'} },
+      }},
+    });
+    const last = rows[rows.length-1];
+    document.getElementById('currentCompLabel').textContent = `${last.weight}kg · ${last.bf}% body fat (as of ${fmtDate(last.date)})`;
+  } else {
+    document.getElementById('currentCompLabel').textContent = 'Log a measurement to see this';
+  }
+
+  if(projWeight.length){
+    const startDay = projWeight[0].x, endDay = projWeight[projWeight.length-1].x;
+    targetCompChartInstance = new Chart(targetCtx, {
+      type:'line',
+      data:{ datasets:[
+        { label:'Projected Weight', data: projWeight, borderColor:'#2f4a3c', borderDash:[6,4], yAxisID:'y', tension:0, fill:false, pointRadius:3, borderWidth:2, pointBackgroundColor:'#2f4a3c' },
+        { label:'Projected Body Fat %', data: projBF, borderColor:'#c1622d', borderDash:[6,4], yAxisID:'y1', tension:0, fill:false, pointRadius:3, borderWidth:2, pointBackgroundColor:'#c1622d' },
+        { label:'Milestones', data: milestonePoints, yAxisID:'y', showLine:false, pointRadius:9, pointStyle:'rectRot', pointBackgroundColor:'#b8923f', pointBorderColor:'#1c2f26', pointBorderWidth:1.5 },
+      ]},
+      options: { ...baseOpts, scales:{ ...baseOpts.scales,
+        x:{ type:'linear', afterBuildTicks: axis=>buildMonthlyTicks(axis, startDay, endDay),
+            ticks:{ font:{family:"'IBM Plex Mono', monospace", size:10}, color:'#5a5347', callback:monthTickLabel },
+            grid:{ color:'rgba(43,38,32,0.08)'} },
+      }},
+    });
+    const goalW = state.goals.targetWeight, goalBF = state.goals.targetBF;
+    document.getElementById('targetCompLabel').textContent = `${goalW}kg · ${goalBF!=null?goalBF+'%':'—'} body fat (goal)`;
+  } else {
+    document.getElementById('targetCompLabel').textContent = 'Set a target weight in Goals to see this';
+  }
+}
+
+function linearRegression(points){
+  // points: [{x: daysSinceEpoch, y: value}]
+  const n = points.length;
+  if(n < 2) return null;
+  const sumX = points.reduce((a,p)=>a+p.x,0);
+  const sumY = points.reduce((a,p)=>a+p.y,0);
+  const sumXY = points.reduce((a,p)=>a+p.x*p.y,0);
+  const sumXX = points.reduce((a,p)=>a+p.x*p.x,0);
+  const denom = (n*sumXX - sumX*sumX);
+  if(denom === 0) return null;
+  const slope = (n*sumXY - sumX*sumY) / denom;
+  const intercept = (sumY - slope*sumX) / n;
+  return { slope, intercept };
+}
+
+function renderProgressTab(){
+  const rows = sortedBodyLogs();
+  const ctx = document.getElementById('progressChart');
+  const proj = computeProjection();
+  const last = rows.length ? rows[rows.length-1] : null;
+  const targetBFLabel = state.goals.targetBF;
+
+  const histWeight = rows.map(r=>({ x: epochDay(r.date), y: r.weight }));
+  const histBF = rows.map(r=>({ x: epochDay(r.date), y: r.bf }));
+
+  // Projected path: a straight line from today's last logged point to the target weight/date.
+  // Projected body fat % is interpolated the same way toward the Target Body Fat % label —
+  // a simplification (real fat-loss curves aren't perfectly linear), but it's consistent with
+  // how the rest of the plan is modeled.
+  let projWeight = [], projBF = [], milestones = [];
+  if(last && proj && !proj.alreadyThere){
+    const startDay = epochDay(last.date);
+    const totalDays = Math.max(1, Math.round(proj.weeks*7));
+    const dayOffsets = new Set([0, totalDays]);
+    for(let d=7; d<totalDays; d+=7) dayOffsets.add(d);
+    const sortedOffsets = Array.from(dayOffsets).sort((a,b)=>a-b);
+    projWeight = sortedOffsets.map(d=>({ x:startDay+d, y: round1(last.weight - (last.weight-proj.targetWeight)*(d/totalDays)) }));
+    if(targetBFLabel!=null){
+      projBF = sortedOffsets.map(d=>({ x:startDay+d, y: round1(last.bf - (last.bf-targetBFLabel)*(d/totalDays)) }));
+    }
+    milestones = [0.25,0.5,0.75,1].map(frac=>{
+      const d = Math.round(totalDays*frac);
+      return {
+        frac, day:startDay+d,
+        weight: round1(last.weight - (last.weight-proj.targetWeight)*frac),
+        bf: targetBFLabel!=null ? round1(last.bf - (last.bf-targetBFLabel)*frac) : null,
+      };
+    });
+  }
+  const milestonePoints = milestones.map(m=>({ x:m.day, y:m.weight }));
+
+  if(progressChartInstance) progressChartInstance.destroy();
+  progressChartInstance = new Chart(ctx, {
+    type:'line',
+    data:{
+      datasets:[
+        { label:'Weight (kg)', data: histWeight, borderColor:'#2f4a3c', backgroundColor:'rgba(47,74,60,0.12)', yAxisID:'y', tension:.3, fill:true, pointRadius:4, pointBackgroundColor:'#2f4a3c' },
+        { label:'Body Fat (%)', data: histBF, borderColor:'#c1622d', backgroundColor:'rgba(193,98,45,0.1)', yAxisID:'y1', tension:.3, fill:true, pointRadius:4, pointBackgroundColor:'#c1622d' },
+        { label:'Projected Weight', data: projWeight, borderColor:'#2f4a3c', borderDash:[6,4], yAxisID:'y', tension:0, fill:false, pointRadius:0, borderWidth:2 },
+        { label:'Projected Body Fat %', data: projBF, borderColor:'#c1622d', borderDash:[6,4], yAxisID:'y1', tension:0, fill:false, pointRadius:0, borderWidth:2 },
+        { label:'Milestones', data: milestonePoints, yAxisID:'y', showLine:false, pointRadius:7, pointStyle:'rectRot', pointBackgroundColor:'#b8923f', pointBorderColor:'#1c2f26', pointBorderWidth:1.5 },
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{ mode:'nearest', intersect:false },
+      plugins:{
+        legend:{ labels:{ font:{ family:"'IBM Plex Mono', monospace", size:11 }, color:'#2b2620' } },
+        tooltip:{ callbacks:{ title: items => items.length ? dayToLabel(items[0].parsed.x) : '' } },
+      },
+      scales:{
+        x:{ type:'linear', ticks:{ font:{family:"'IBM Plex Mono', monospace", size:10}, color:'#5a5347', callback:v=>dayToLabel(v) }, grid:{ color:'rgba(43,38,32,0.08)'} },
+        y:{ position:'left', title:{ display:true, text:'kg', font:{family:"'IBM Plex Mono', monospace",size:10} }, grid:{ color:'rgba(43,38,32,0.08)'} },
+        y1:{ position:'right', title:{ display:true, text:'%', font:{family:"'IBM Plex Mono', monospace",size:10} }, grid:{ display:false } },
+      }
+    }
+  });
+
+  renderCompositionCharts(rows, projWeight, projBF, milestonePoints);
+
+  const milestoneTbody = document.getElementById('milestoneTable');
+  if(!milestones.length){
+    milestoneTbody.innerHTML = `<tr class="empty-row"><td colspan="4">Set a target weight in Goals to see milestones.</td></tr>`;
+  } else {
+    const milestoneLabels = ['25% of the way','Halfway','75% of the way','Goal'];
+    milestoneTbody.innerHTML = milestones.map((m,i)=>`
+      <tr>
+        <td>${milestoneLabels[i]}</td>
+        <td class="num">${m.weight} kg</td>
+        <td class="num">${m.bf!=null ? m.bf+'%' : '—'}</td>
+        <td class="num">${dayToLabel(m.day)}</td>
+      </tr>
+    `).join('');
+  }
+
+  // workout chart: bar of workouts/week needed vs planned, just visualize planned cadence across projected weeks
+  const wCtx = document.getElementById('workoutChart');
+  const goals = state.goals;
+  const weeks = proj && proj.weeks ? Math.min(Math.ceil(proj.weeks), 26) : 12;
+  const weekLabels = Array.from({length:weeks}, (_,i)=>`Wk ${i+1}`);
+  if(workoutChartInstance) workoutChartInstance.destroy();
+  workoutChartInstance = new Chart(wCtx, {
+    type:'bar',
+    data:{
+      labels: weekLabels,
+      datasets:[{ label:'Planned workouts', data: weekLabels.map(()=> goals.workouts||0), backgroundColor:'#b8923f' }]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{
+        x:{ ticks:{ font:{family:"'IBM Plex Mono', monospace", size:9}, color:'#5a5347', maxRotation:0, autoSkip:true, maxTicksLimit:8 }, grid:{display:false} },
+        y:{ beginAtZero:true, ticks:{ font:{family:"'IBM Plex Mono', monospace", size:10} }, grid:{ color:'rgba(43,38,32,0.08)'} }
+      }
+    }
+  });
+
+  // projection banner: prefer actual logged trend if >=3 points, else assumption-based.
+  // Uses WEIGHT (not body fat %) for the trend fit — weight is a direct scale reading,
+  // far less noisy than BIA-estimated body fat %.
+  const banner = document.getElementById('projDateText');
+  const basis = document.getElementById('projBasis');
+  const goalWeight = state.goals.targetWeight;
+
+  if(!goalWeight || rows.length < 1){
+    banner.textContent = 'Set a target weight and log a measurement to see this.';
+    basis.textContent = '—';
+  } else if(rows.length >= 3){
+    const wPoints = rows.map(r=>({ x: epochDay(r.date), y: r.weight }));
+    const reg = linearRegression(wPoints);
+    if(reg && reg.slope < 0){
+      const daysToGoal = (goalWeight - reg.intercept) / reg.slope;
+      const today = epochDay(todayISO());
+      const daysRemaining = Math.round(daysToGoal - today);
+      if(daysRemaining > 0 && daysRemaining < 3650){
+        const d = new Date(); d.setDate(d.getDate()+daysRemaining);
+        banner.textContent = `${d.toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'})} — about ${Math.round(daysRemaining/7)} weeks away`;
+        basis.textContent = 'Actual logged trend (linear fit on weight)';
+      } else {
+        banner.textContent = 'Trend not currently moving toward target';
+        basis.textContent = 'Actual logged trend (linear fit on weight)';
+      }
+    } else {
+      banner.textContent = 'Weight trend is flat or rising — this reflects your logged history, not the deficit you\'re about to start';
+      basis.textContent = 'Actual logged trend (linear fit on weight)';
+    }
+  } else {
+    const proj2 = computeProjection();
+    if(proj2 && proj2.alreadyThere){
+      banner.textContent = 'Target already reached 🎉';
+      basis.textContent = 'Goals assumptions';
+    } else if(proj2){
+      banner.textContent = `${proj2.targetDate.toLocaleDateString(undefined,{month:'long',day:'numeric',year:'numeric'})} — about ${Math.round(proj2.weeks)} weeks away`;
+      basis.textContent = 'Goals assumptions (log 3+ measurements for a trend-based estimate)';
+    } else {
+      banner.textContent = 'Fill in Goals & Assumptions to estimate this';
+      basis.textContent = '—';
+    }
+  }
+
+  renderPhotoGallery();
+}
+
+/* progress photos */
+document.getElementById('progressPhotoInput').addEventListener('change', async e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const dataUrl = await fileToDataUrl(f);
+  state.progressPhotos.push({ id: uid(), date: todayISO(), photo: dataUrl });
+  saveState();
+  renderPhotoGallery();
+  toast('Progress photo added.');
+  e.target.value = '';
+});
+function renderPhotoGallery(){
+  const wrap = document.getElementById('photoGallery');
+  if(!state.progressPhotos.length){
+    wrap.innerHTML = `<p class="hint">No progress photos yet — upload a monthly photo to build your timeline.</p>`;
+    return;
+  }
+  const byMonth = {};
+  state.progressPhotos.slice().sort((a,b)=>b.date.localeCompare(a.date)).forEach(p=>{
+    const key = p.date.slice(0,7);
+    (byMonth[key] = byMonth[key]||[]).push(p);
+  });
+  wrap.innerHTML = Object.entries(byMonth).map(([month, photos])=>{
+    const label = new Date(month+'-01T00:00:00').toLocaleDateString(undefined,{month:'long', year:'numeric'});
+    return `<div class="gallery-month"><h4>${label}</h4><div class="gallery-grid">
+      ${photos.map(p=>`
+        <div class="gallery-item">
+          <img src="${p.photo}">
+          <button class="del" data-del-photo="${p.id}">✕</button>
+          <div class="cap">${fmtDate(p.date)}</div>
+        </div>`).join('')}
+    </div></div>`;
+  }).join('');
+}
+document.getElementById('photoGallery').addEventListener('click', e=>{
+  const btn = e.target.closest('[data-del-photo]');
+  if(!btn) return;
+  state.progressPhotos = state.progressPhotos.filter(p=>p.id!==btn.dataset.delPhoto);
+  saveState();
+  renderPhotoGallery();
+});
+
+/* ============================================================
+   MASTER RENDER
+============================================================ */
+function renderAll(){
+  renderHeader();
+  loadProfileForm();
+  renderBodyLogTable();
+  renderStatCards();
+  renderQuickPhotos();
+  loadGoalsForm();
+  renderGoalsTab();
+  renderFoodDbTable();
+  populateFoodSelects();
+  renderTracker();
+  renderComboChips();
+  renderWorkoutsTab();
+}
+renderAll();
+</script>
+</body>
+</html>
