@@ -786,7 +786,7 @@ footer{
       <div class="card">
         <div class="card-title">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
-          Remaining Today
+          Remaining — <span id="remainingCardDate">Today</span>
         </div>
         <div class="ring-wrap">
           <div class="ring">
@@ -1192,11 +1192,19 @@ const defaultState = {
     { id:'f11', name:'Potatoes (boiled)', cal:0.87, p:0.019, c:0.201, f:0.001, fiber:0.018, sugar:0.009, sodium:0.06, potassium:3.79, calcium:0.08, iron:0.0031, magnesium:0.2, vitA:0, vitC:0.13, vitD:0, vitB12:0 },
     { id:'f12', name:'Chicken Breast (cooked)', cal:1.65, p:0.31, c:0, f:0.036, fiber:0, sugar:0, sodium:0.74, potassium:2.56, calcium:0.15, iron:0.01, magnesium:0.29, vitA:0.09, vitC:0, vitD:0.001, vitB12:0.003 },
     { id:'f13', name:'Avocado', cal:1.6, p:0.02, c:0.085, f:0.147, fiber:0.067, sugar:0.007, sodium:0.07, potassium:4.85, calcium:0.12, iron:0.0055, magnesium:0.29, vitA:0.07, vitC:0.1, vitD:0, vitB12:0 },
-    { id:'f14', name:'Grape Molasses with Tahini', cal:4.43, p:0.085, c:0.46, f:0.265, fiber:0.045, sugar:0.33, sodium:0.2, potassium:4.35, calcium:2.55, iron:0.08, magnesium:0.68, vitA:0, vitC:0, vitD:0, vitB12:0 },
+    { id:'f14', name:'Grape Molasses with Tahini', cal:3.82, p:0.051, c:0.56, f:0.159, fiber:0.027, sugar:0.457, sodium:0.175, potassium:4.61, calcium:1.89, iron:0.076, magnesium:0.565, vitA:0, vitC:0, vitD:0, vitB12:0 },
+    { id:'f20', name:'Muhammara', cal:3.0, p:0.055, c:0.16, f:0.23, fiber:0.035, sugar:0.07, sodium:3.2, potassium:2.5, calcium:0.3, iron:0.012, magnesium:0.42, vitA:0.5, vitC:0.15, vitD:0, vitB12:0 },
+    { id:'f21', name:'Light Feta Cheese', cal:1.5, p:0.17, c:0.035, f:0.075, fiber:0, sugar:0.035, sodium:8.5, potassium:0.95, calcium:4.5, iron:0.003, magnesium:0.15, vitA:1.5, vitC:0, vitD:0.003, vitB12:0.005 },
+    { id:'f22', name:'Black Olives (small, canned)', cal:1.15, p:0.008, c:0.06, f:0.107, fiber:0.032, sugar:0, sodium:7.35, potassium:0.08, calcium:0.52, iron:0.033, magnesium:0.04, vitA:0.04, vitC:0.009, vitD:0, vitB12:0 },
+    // From label: 170 kcal / 11p / 27c / 3f per 50g bar (doubled to per-100g below).
+    { id:'f23', name:'NuGo Protein Bar', cal:3.4, p:0.22, c:0.54, f:0.06, fiber:0.04, sugar:0.26, sodium:2.3, potassium:1.6, calcium:5.0, iron:0.006, magnesium:0, vitA:7.2, vitC:0.54, vitD:0, vitB12:0.012 },
     { id:'f15', name:'Turkish Flatbread (Pide)', cal:2.75, p:0.09, c:0.55, f:0.012, fiber:0.024, sugar:0.02, sodium:5.36, potassium:1.05, calcium:1.0, iron:0.025, magnesium:0.25, vitA:0, vitC:0, vitD:0, vitB12:0 },
     { id:'f16', name:'Scrambled Eggs', cal:1.48, p:0.1, c:0.016, f:0.11, fiber:0, sugar:0.011, sodium:2.07, potassium:1.37, calcium:0.68, iron:0.012, magnesium:0.1, vitA:1.6, vitC:0, vitD:0.01, vitB12:0.006 },
     { id:'f17', name:'Chorizo', cal:4.55, p:0.24, c:0.019, f:0.38, fiber:0, sugar:0.005, sodium:12.35, potassium:3.4, calcium:0.21, iron:0.023, magnesium:0.2, vitA:0, vitC:0, vitD:0, vitB12:0.03 },
     { id:'f18', name:'Manchego Cheese', cal:4.0, p:0.25, c:0.005, f:0.33, fiber:0, sugar:0.005, sodium:8.0, potassium:1.0, calcium:7.0, iron:0.005, magnesium:0.28, vitA:2.0, vitC:0, vitD:0.005, vitB12:0.01 },
+    // Homemade estimate from actual recipe (2kg lamb, half low-fat/half medium-fat, 5 tbsp olive oil,
+    // onion, tomato, potato) rather than a generic online recipe — see conversation for full breakdown.
+    { id:'f19', name:'Kuzu Sote', cal:1.75, p:0.134, c:0.061, f:0.103, fiber:0.017, sugar:0.023, sodium:3.45, potassium:4.03, calcium:0.23, iron:0.017, magnesium:0.23, vitA:0.058, vitC:0.092, vitD:0, vitB12:0.017 },
   ],
   combos: [
     { id:'combo1', name:'Usual Protein Shake (2 scoops Rite protein, banana, 10g chia, 10g flax)', cal:336, p:28, c:34, f:7, parts:[] },
@@ -1226,6 +1234,30 @@ const defaultState = {
       { id:'d3f', name:'Dinner — Grilled Chicken (250g raw), Rice Pilaf, Potatoes, Veggies', cal:793, p:86, c:67, f:18.8 },
       { id:'d3g', name:'Leftover — 100g Day 1 Turkish Köfte & Veggies', cal:138, p:10.8, c:8.5, f:5.8 },
       { id:'d3h', name:'Snack — Strawberry Whey Protein Yogurt (150g pot)', cal:94.5, p:15, c:7.5, f:0.3 },
+    ],
+    '2026-07-22': [
+      { id:'d4a', name:'Muhammara (25g)', cal:75, p:1.4, c:4.0, f:5.8 },
+      { id:'d4b', name:'Multigrain Toast (40g)', cal:106, p:3.6, c:18.4, f:1.6 },
+      { id:'d4c', name:'Manchego Cheese (7g)', cal:28, p:1.8, c:0.0, f:2.3 },
+      { id:'d4d', name:'Chorizo (6g)', cal:27.3, p:1.4, c:0.1, f:2.3 },
+      { id:'d4e', name:'Light Feta Cheese (35g)', cal:52.5, p:6.0, c:1.2, f:2.6 },
+      { id:'d4f', name:'Grape Molasses with Tahini (25g)', cal:95.5, p:1.3, c:14.0, f:4.0 },
+      { id:'d4g', name:'Avocado (50g)', cal:80, p:1.0, c:4.3, f:7.4 },
+      { id:'d4h', name:'Eggs (130g)', cal:185.9, p:16.4, c:0.9, f:12.4 },
+      { id:'d4i', name:'Black Olives (20g)', cal:23, p:0.2, c:1.2, f:2.1 },
+      { id:'d4j', name:'Kuzu Sote (250g)', cal:437.5, p:33.5, c:15.3, f:25.8 },
+    ],
+    '2026-07-23': [
+      { id:'d5a', name:'Muhammara (25g)', cal:75, p:1.4, c:4.0, f:5.8 },
+      { id:'d5b', name:'Multigrain Toast (40g)', cal:106, p:3.6, c:18.4, f:1.6 },
+      { id:'d5c', name:'Manchego Cheese (7g)', cal:28, p:1.8, c:0.0, f:2.3 },
+      { id:'d5d', name:'Chorizo (6g)', cal:27.3, p:1.4, c:0.1, f:2.3 },
+      { id:'d5e', name:'Light Feta Cheese (35g)', cal:52.5, p:6.0, c:1.2, f:2.6 },
+      { id:'d5f', name:'Grape Molasses with Tahini (25g)', cal:95.5, p:1.3, c:14.0, f:4.0 },
+      { id:'d5g', name:'Avocado (50g)', cal:80, p:1.0, c:4.3, f:7.4 },
+      { id:'d5h', name:'Eggs (130g)', cal:185.9, p:16.4, c:0.9, f:12.4 },
+      { id:'d5i', name:'Black Olives (20g)', cal:23, p:0.2, c:1.2, f:2.1 },
+      { id:'d5j', name:'NuGo Protein Bar (50g)', cal:170, p:11, c:27, f:3 },
     ],
   },
   workoutLogs: [
@@ -1595,10 +1627,23 @@ document.getElementById('syncHealthBtn').addEventListener('click', async ()=>{
     let added = 0, matched = 0;
     incoming.forEach(w=>{
       if(!w.date || w.calBurned==null) return;
-      // Already synced (same Health record)? Skip entirely.
-      if(w.id && state.workoutLogs.some(e=>e.sourceId===w.id)) return;
-      // A manually-entered workout on the same day with no sourceId yet? Upgrade it
-      // with the real synced numbers instead of creating a duplicate.
+      // Health Auto Export regenerates each workout's "id" between export cycles, even for the
+      // same real workout — so matching on sourceId alone isn't stable over time. Match on
+      // date + name + calories-within-2kcal first (catches the same workout re-exported with a
+      // new id); only fall back to sourceId-only matching if that fails.
+      const existing = state.workoutLogs.find(e=>
+        e.date===w.date && e.name===w.name && Math.abs(e.calBurned - w.calBurned) < 2
+      ) || (w.id ? state.workoutLogs.find(e=>e.sourceId===w.id) : null);
+      if(existing){
+        existing.sourceId = w.id;
+        existing.durationMin = w.durationMin;
+        existing.calBurned = w.calBurned;
+        existing.note = `Synced from Health Auto Export (avg HR ${w.avgHeartRate||'—'}bpm, total ${w.totalEnergy||'—'}kcal)`;
+        matched++;
+        return;
+      }
+      // A manually-entered workout on the same day with no sourceId yet and a different
+      // (generic) name? Upgrade it with the real synced numbers instead of creating a duplicate.
       const manualMatch = state.workoutLogs.find(e=>!e.sourceId && e.date===w.date);
       if(manualMatch){
         manualMatch.name = w.name || manualMatch.name;
@@ -2069,6 +2114,8 @@ function renderWeeklyBreakdown(){
 }
 
 function renderTracker(){
+  document.getElementById('remainingCardDate').textContent =
+    trackerDate === todayISO() ? 'Today' : fmtDate(trackerDate);
   const entries = getDayEntries(trackerDate);
   const tbody = document.getElementById('dailyLogTable');
   if(!entries.length){
